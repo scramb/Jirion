@@ -1,9 +1,9 @@
 package ui
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
-	"encoding/json"
 	"time"
 
 	"fyne.io/fyne/v2"

@@ -18,11 +18,10 @@ func main() {
 	user := prefs.String("jira_user")
 	token := prefs.String("jira_token")
 
-
 	if domain == "" || user == "" || token == "" {
-			ui.ShowSetupWizard(w, a)
+		ui.ShowSetupWizard(w, a)
 	} else {
-			ui.ShowMainApp(w, a, domain, user, token)
+		ui.ShowMainApp(w, a, domain, user, token)
 	}
 	w.ShowAndRun()
 }

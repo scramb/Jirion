@@ -14,9 +14,9 @@ import (
 type JiraIssue struct {
 	Key    string `json:"key"`
 	Fields struct {
-		Summary   string `json:"summary"`
+		Summary     string          `json:"summary"`
 		Description json.RawMessage `json:"description"`
-		IssueType struct {
+		IssueType   struct {
 			Name string `json:"name"`
 		} `json:"issuetype"`
 	} `json:"fields"`
@@ -95,10 +95,10 @@ func ExtractDescriptionText(raw json.RawMessage) string {
 }
 
 type ADFNode struct {
-	Type    string        `json:"type"`
-	Text    string        `json:"text,omitempty"`
-	Content []ADFNode     `json:"content,omitempty"`
-	Items   [][]ADFNode   `json:"items,omitempty"`
+	Type    string      `json:"type"`
+	Text    string      `json:"text,omitempty"`
+	Content []ADFNode   `json:"content,omitempty"`
+	Items   [][]ADFNode `json:"items,omitempty"`
 }
 
 // unterstützt Absätze, Bullet- & Ordered-Lists
@@ -296,51 +296,51 @@ func FetchAllProjects(domain, email, token string) ([]JiraProject, error) {
 
 // FetchProjectLabels queries all issues in a project and aggregates unique labels
 func FetchProjectLabels(domain, email, token, projectKey string) ([]string, error) {
-    url := fmt.Sprintf("https://%s.atlassian.net/rest/api/3/search/jql", domain)
+	url := fmt.Sprintf("https://%s.atlassian.net/rest/api/3/search/jql", domain)
 
-    body := map[string]interface{}{
-        "jql":        fmt.Sprintf("project=%s", projectKey),
-        "fields":     []string{"labels"},
-        "maxResults": 1000,
-    }
-    jsonBody, _ := json.Marshal(body)
+	body := map[string]interface{}{
+		"jql":        fmt.Sprintf("project=%s", projectKey),
+		"fields":     []string{"labels"},
+		"maxResults": 1000,
+	}
+	jsonBody, _ := json.Marshal(body)
 
-    req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-    auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", email, token)))
-    req.Header.Add("Authorization", "Basic "+auth)
-    req.Header.Add("Accept", "application/json")
-    req.Header.Add("Content-Type", "application/json")
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
+	auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", email, token)))
+	req.Header.Add("Authorization", "Basic "+auth)
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
 
-    res, err := http.DefaultClient.Do(req)
-    if err != nil {
-        return nil, err
-    }
-    defer res.Body.Close()
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
 
-    if res.StatusCode != http.StatusOK {
-        b, _ := io.ReadAll(res.Body)
-        return nil, fmt.Errorf("Jira API error (%d): %s", res.StatusCode, string(b))
-    }
+	if res.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(res.Body)
+		return nil, fmt.Errorf("Jira API error (%d): %s", res.StatusCode, string(b))
+	}
 
-    var data jiraSearchResult
-    if err := json.NewDecoder(res.Body).Decode(&data); err != nil {
-        return nil, err
-    }
+	var data jiraSearchResult
+	if err := json.NewDecoder(res.Body).Decode(&data); err != nil {
+		return nil, err
+	}
 
-    set := map[string]struct{}{}
-    for _, iss := range data.Issues {
-        for _, l := range iss.Fields.Labels {
-            if l == "" {
-                continue
-            }
-            set[l] = struct{}{}
-        }
-    }
+	set := map[string]struct{}{}
+	for _, iss := range data.Issues {
+		for _, l := range iss.Fields.Labels {
+			if l == "" {
+				continue
+			}
+			set[l] = struct{}{}
+		}
+	}
 
-    labels := make([]string, 0, len(set))
-    for k := range set {
-        labels = append(labels, k)
-    }
-    sort.Strings(labels)
-    return labels, nil
+	labels := make([]string, 0, len(set))
+	for k := range set {
+		labels = append(labels, k)
+	}
+	sort.Strings(labels)
+	return labels, nil
 }
