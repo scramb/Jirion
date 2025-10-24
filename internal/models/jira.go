@@ -1,12 +1,12 @@
 package models
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"bytes"
 )
 
 type JiraIssue struct {
@@ -31,6 +31,18 @@ type JiraProject struct {
 
 type JiraProjectResult struct {
 	Values []JiraProject `json:"values"`
+}
+
+type JiraIssueType struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type JiraCreateMetaResponse struct {
+	Projects []struct {
+		Key        string          `json:"key"`
+		IssueTypes []JiraIssueType `json:"issuetypes"`
+	} `json:"projects"`
 }
 
 func FetchAssignedIssues(domain, email, apiToken string) ([]JiraIssue, error) {
@@ -86,59 +98,89 @@ func FetchFavouriteProjects(domain, email, token string) ([]JiraProject, error) 
 }
 
 func CreateJiraIssue(domain, email, token, projectKey, issueType, title, content string) error {
-    url := fmt.Sprintf("https://%s.atlassian.net/rest/api/3/issue", domain)
+	url := fmt.Sprintf("https://%s.atlassian.net/rest/api/3/issue", domain)
 
-    // Beschreibung im Atlassian Document Format (ADF)
-    adf := map[string]interface{}{
-        "type":    "doc",
-        "version": 1,
-        "content": []interface{}{
-            map[string]interface{}{
-                "type": "paragraph",
-                "content": []interface{}{
-                    map[string]interface{}{
-                        "type": "text",
-                        "text": content,
-                    },
-                },
-            },
-        },
-    }
+	// Beschreibung im Atlassian Document Format (ADF)
+	adf := map[string]interface{}{
+		"type":    "doc",
+		"version": 1,
+		"content": []interface{}{
+			map[string]interface{}{
+				"type": "paragraph",
+				"content": []interface{}{
+					map[string]interface{}{
+						"type": "text",
+						"text": content,
+					},
+				},
+			},
+		},
+	}
 
-    body := map[string]interface{}{
-        "fields": map[string]interface{}{
-            "project": map[string]string{
-                "key": projectKey,
-            },
-            "issuetype": map[string]string{
-                "name": issueType,
-            },
-            "summary":     title,
-            "description": adf, // ✅ korrektes ADF-Objekt
-        },
-    }
+	body := map[string]interface{}{
+		"fields": map[string]interface{}{
+			"project": map[string]string{
+				"key": projectKey,
+			},
+			"issuetype": map[string]string{
+				"name": issueType,
+			},
+			"summary":     title,
+			"description": adf, // ✅ korrektes ADF-Objekt
+		},
+	}
 
-    jsonBody, err := json.Marshal(body)
-    if err != nil {
-        return err
-    }
+	jsonBody, err := json.Marshal(body)
+	if err != nil {
+		return err
+	}
 
-    req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-    auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", email, token)))
-    req.Header.Add("Authorization", "Basic "+auth)
-    req.Header.Add("Accept", "application/json")
-    req.Header.Add("Content-Type", "application/json")
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
+	auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", email, token)))
+	req.Header.Add("Authorization", "Basic "+auth)
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
 
-    res, err := http.DefaultClient.Do(req)
-    if err != nil {
-        return err
-    }
-    defer res.Body.Close()
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
 
-    if res.StatusCode != 201 {
-        b, _ := io.ReadAll(res.Body)
-        return fmt.Errorf("failed to create issue: %s", string(b))
-    }
+	if res.StatusCode != 201 {
+		b, _ := io.ReadAll(res.Body)
+		return fmt.Errorf("failed to create issue: %s", string(b))
+	}
 
-    return nil
+	return nil
+}
+
+func FetchProjectIssueTypes(domain, email, token, projectKey string) ([]JiraIssueType, error) {
+	url := fmt.Sprintf("https://%s.atlassian.net/rest/api/3/issue/createmeta?projectKeys=%s", domain, projectKey)
+	req, _ := http.NewRequest("GET", url, nil)
+	auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", email, token)))
+	req.Header.Add("Authorization", "Basic "+auth)
+	req.Header.Add("Accept", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		body, _ := io.ReadAll(res.Body)
+		return nil, fmt.Errorf("Jira API error (%d): %s", res.StatusCode, string(body))
+	}
+
+	var data JiraCreateMetaResponse
+	if err := json.NewDecoder(res.Body).Decode(&data); err != nil {
+		return nil, err
+	}
+
+	if len(data.Projects) == 0 {
+		return nil, fmt.Errorf("keine Projektmetadaten für %s gefunden", projectKey)
+	}
+
+	return data.Projects[0].IssueTypes, nil
 }

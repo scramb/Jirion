@@ -1,15 +1,21 @@
 package main
 
 import (
-	"github.com/scramb/backlog-manager/ui"
 	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/theme"
+	"github.com/scramb/backlog-manager/ui"
 )
 
 func main() {
-	myApp := app.NewWithID("com.backlog.manager")
-	myApp.Settings().SetTheme(theme.LightTheme())
+	// Mit eindeutiger ID starten (fix für Preferences-Fehler)
+	a := app.NewWithID("com.scramb.backlogmanager")
+	w := a.NewWindow("Backlog Manager")
 
-	w := ui.CreateMainWindow(myApp) // Fenster-Objekt zurückgeben lassen
-	w.ShowAndRun()                  // Fenster starten und App laufen lassen
+	// Persistierte Einstellungen aus Preferences lesen
+	prefs := a.Preferences()
+	domain := prefs.String("jira_domain")
+	user := prefs.String("jira_user")
+	token := prefs.String("jira_token")
+
+	ui.ShowMainApp(w, a, domain, user, token)
+	w.ShowAndRun()
 }
