@@ -27,10 +27,6 @@ jobs:
             GOOS: windows
             GOARCH: amd64
             ARCHNAME: amd64
-          - os: ubuntu-latest
-            GOOS: linux
-            GOARCH: amd64
-            ARCHNAME: amd64
 
     steps:
       - name: Checkout
@@ -46,15 +42,18 @@ jobs:
         run: go install fyne.io/fyne/v2/cmd/fyne@latest
 
       - name: Build binary / package
+        shell: bash
         run: |
           mkdir -p dist
           echo "Building for ${{ matrix.GOOS }}-${{ matrix.GOARCH }}"
 
           if [ "${{ matrix.GOOS }}" = "darwin" ]; then
-            fyne package -os darwin -icon assets/app.png -name "Backlog Manager"
+            fyne package -os darwin -icon app.png -name "Backlog Manager"
             mv "Backlog Manager.dmg" "dist/backlog-manager-darwin-${{ matrix.ARCHNAME }}.dmg"
           elif [ "${{ matrix.GOOS }}" = "windows" ]; then
             GOOS=${{ matrix.GOOS }} GOARCH=${{ matrix.GOARCH }} go build -ldflags "-s -w" -o "dist/backlog-manager-windows-${{ matrix.ARCHNAME }}.exe" .
+          else
+            GOOS=${{ matrix.GOOS }} GOARCH=${{ matrix.GOARCH }} go build -ldflags "-s -w" -o "dist/backlog-manager-linux-${{ matrix.ARCHNAME }}" .
           fi
 
       - name: Create source archive
