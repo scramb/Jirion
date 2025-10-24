@@ -10,7 +10,8 @@ import (
 func ShowMainApp(w fyne.Window, app fyne.App, domain, user, token string) {
 	// Initialize views
 	createView := BacklogView(app, w, domain, user, token)
-	ticketsView := TicketsView(app, w, domain, user, token)
+	reloadTickets := make(chan bool)
+	ticketsView := TicketsView(app, w, domain, user, token, reloadTickets)
 	settingsView := SettingsView(app, w)
 
 	// Build tab container
@@ -20,12 +21,9 @@ func ShowMainApp(w fyne.Window, app fyne.App, domain, user, token string) {
 		container.NewTabItem("⚙️ Settings", settingsView),
 	)
 
-	// Auto-refresh when switching to "My Tickets"
 	tabs.OnChanged = func(tab *container.TabItem) {
 		if tab.Text == "🎫 My Tickets" {
-			// Rebuild TicketsView to trigger refresh
-			tabs.Items[1].Content = TicketsView(app, w, domain, user, token)
-			tabs.Refresh()
+			reloadTickets <- true
 		}
 	}
 

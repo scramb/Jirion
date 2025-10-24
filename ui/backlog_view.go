@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -19,15 +20,47 @@ func BacklogView(app fyne.App, w fyne.Window, domain, user, token string) fyne.C
 	// Inputs
 	titleEntry := widget.NewEntry()
 	contentEntry := widget.NewMultiLineEntry()
+	contentEntry.Wrapping = fyne.TextWrapWord
+	contentEntry.SetMinRowsVisible(10)
 
 	projectSelect := widget.NewSelect([]string{"Lade Projekte..."}, nil)
 	issueType := widget.NewSelect([]string{"Lade..."}, nil)
 	issueType.Disable()
 
+	labelChecks := map[string]*widget.Check{}
+	updateLabelsGrid := func(savedLabels []string) fyne.CanvasObject {
+		numLabels := len(savedLabels)
+		if numLabels == 0 {
+			return widget.NewLabel("Keine gespeicherten Labels gefunden")
+		}
+
+		labelsPerRow := 5
+		labelChecks = make(map[string]*widget.Check)
+		gridObjects := []fyne.CanvasObject{}
+
+		for _, label := range savedLabels {
+			check := widget.NewCheck(label, func(bool) {})
+			labelChecks[label] = check
+			gridObjects = append(gridObjects, check)
+		}
+
+		// container.NewGridWithColumns sorgt für gleichmäßige Spalten und saubere Ausrichtung
+		grid := container.NewGridWithColumns(labelsPerRow, gridObjects...)
+		return container.NewVBox(grid)
+	}
+	labelsGrid := container.NewVBox(widget.NewLabel("Lade Labels..."))
+
 	createBtn := widget.NewButton("Erstellen", nil)
 
 	// zuerst deklarieren, aber noch ohne Handler
 	generateBtn := widget.NewButtonWithIcon("KI-Vorschlag generieren", theme.ComputerIcon(), nil)
+	// Disable generate if no AI endpoint configured
+	if app.Preferences().String("ai_endpoint") == "" {
+		generateBtn.Disable()
+		fyne.Do(func() {
+			dialog.ShowInformation("KI deaktiviert", "Bitte AI Endpoint in den Einstellungen konfigurieren, um KI-Vorschläge zu aktivieren.", w)
+		})
+	}
 
 	// dann Handler nachträglich setzen
 	generateBtn.OnTapped = func() {
@@ -48,8 +81,8 @@ func BacklogView(app fyne.App, w fyne.Window, domain, user, token string) fyne.C
 			}
 
 			userPrompt := fmt.Sprintf("Erstelle eine Jira-Story basierend auf dem Titel: '%s'", titleEntry.Text)
-			result, err := models.GenerateBacklogContent(apiKey, systemPrompt, userPrompt)
-
+			endpoint := app.Preferences().String("ai_endpoint")
+			result, err := models.GenerateBacklogContent(apiKey, endpoint, systemPrompt, userPrompt)
 			fyne.Do(func() {
 				generateBtn.Enable()
 				if err != nil {
@@ -113,6 +146,24 @@ func BacklogView(app fyne.App, w fyne.Window, domain, user, token string) fyne.C
 				issueType.Refresh()
 			})
 		}()
+
+		go func() {
+			key := fmt.Sprintf("label_selection_%s", projectKey)
+			saved := app.Preferences().String(key)
+			var savedLabels []string
+			if saved != "" {
+				_ = json.Unmarshal([]byte(saved), &savedLabels)
+			}
+			fyne.Do(func() {
+				if len(savedLabels) > 0 {
+					grid := updateLabelsGrid(savedLabels)
+					labelsGrid.Objects = []fyne.CanvasObject{grid}
+				} else {
+					labelsGrid.Objects = []fyne.CanvasObject{widget.NewLabel("Keine gespeicherten Labels gefunden")}
+				}
+				labelsGrid.Refresh()
+			})
+		}()
 	}
 
 	// Create issue
@@ -147,7 +198,14 @@ func BacklogView(app fyne.App, w fyne.Window, domain, user, token string) fyne.C
 				return
 			}
 
-			err := models.CreateJiraIssue(domain, user, token, projectKey, selectedType, titleEntry.Text, contentEntry.Text)
+			var selectedLabels []string
+			for label, check := range labelChecks {
+				if check.Checked {
+					selectedLabels = append(selectedLabels, label)
+				}
+			}
+
+			err := models.CreateJiraIssue(domain, user, token, projectKey, selectedType, titleEntry.Text, contentEntry.Text, selectedLabels)
 			fyne.Do(func() {
 				createBtn.Enable()
 				if err != nil {
@@ -161,20 +219,20 @@ func BacklogView(app fyne.App, w fyne.Window, domain, user, token string) fyne.C
 		}()
 	}
 
-	// Layout
-	createForm := container.NewVBox(
+	topControls := container.NewVBox(
 		widget.NewLabelWithStyle("📝 Create Backlog", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabel("Projekt"),
 		projectSelect,
 		widget.NewLabel("Typ"),
 		issueType,
+		widget.NewLabel("Labels"),
 		widget.NewLabel("Titel"),
 		titleEntry,
+		labelsGrid,
 		widget.NewLabel("Beschreibung"),
 		generateBtn,
-		contentEntry,
-		createBtn,
 	)
+	createForm := container.NewBorder(topControls, createBtn, nil, nil, contentEntry)
 
 	return createForm
 }

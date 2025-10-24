@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"io"
+	"net/http"
+	"strings"
 )
 
 type OpenAIRequest struct {
@@ -24,9 +25,17 @@ type OpenAIResponse struct {
 	} `json:"choices"`
 }
 
-func GenerateBacklogContent(apiKey, systemPrompt, userPrompt string) (string, error) {
+func GenerateBacklogContent(apiKey, endpoint, systemPrompt, userPrompt string) (string, error) {
+	if endpoint == "" {
+		endpoint = "https://api.openai.com/v1" // fallback
+	}
+	if !strings.HasSuffix(endpoint, "/v1") && !strings.HasSuffix(endpoint, "/v1/") {
+		endpoint = strings.TrimRight(endpoint, "/") + "/v1"
+	}
+	url := endpoint + "/chat/completions"
+
 	payload := map[string]interface{}{
-		"model": "azure-gpt-4.1",
+		"model": "gpt-4o-mini",
 		"messages": []map[string]string{
 			{"role": "system", "content": systemPrompt},
 			{"role": "user", "content": userPrompt},
@@ -34,7 +43,7 @@ func GenerateBacklogContent(apiKey, systemPrompt, userPrompt string) (string, er
 	}
 
 	body, _ := json.Marshal(payload)
-	req, _ := http.NewRequest("POST", "https://litellm-test.az.de.bauhaus.intra/v1/chat/completions", bytes.NewBuffer(body))
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(body))
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", apiKey))
 	req.Header.Add("Content-Type", "application/json")
 
@@ -45,8 +54,8 @@ func GenerateBacklogContent(apiKey, systemPrompt, userPrompt string) (string, er
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-			bodyBytes, _ := io.ReadAll(resp.Body)
-			return "", fmt.Errorf("OpenAI API Fehler (%d): %s", resp.StatusCode, string(bodyBytes))
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("AI API Fehler (%d): %s", resp.StatusCode, string(bodyBytes))
 	}
 
 	var data OpenAIResponse
@@ -55,7 +64,7 @@ func GenerateBacklogContent(apiKey, systemPrompt, userPrompt string) (string, er
 	}
 
 	if len(data.Choices) == 0 {
-		return "", fmt.Errorf("keine Antwort von OpenAI")
+		return "", fmt.Errorf("keine Antwort von AI")
 	}
 
 	return data.Choices[0].Message.Content, nil
