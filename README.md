@@ -104,7 +104,7 @@ Trage dort deine Jira-Instanz (z. B. `<jira-space>.atlassian.net`), deine E-Mail
 
 | Setup Wizard | Tickets View | Backlog Creation |
 |--------------|--------------|------------------|
-| ![Setup](assets/screens/setup.png) | ![Tickets](assets/screens/tickets.png) | ![Create](assets/screens/backlog.png) |
+| ![Setup](assets/screens/setup.png) | ![Tickets](https://ibb.co/mVqx8jPn) | ![Create](https://ibb.co/kbnF3Kh) |
 
 ---
 
