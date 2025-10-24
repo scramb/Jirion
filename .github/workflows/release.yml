@@ -1,0 +1,92 @@
+name: Build & Release Backlog Manager
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            GOOS: darwin
+            GOARCH: amd64
+            ARCHNAME: intel
+          - os: macos-latest
+            GOOS: darwin
+            GOARCH: arm64
+            ARCHNAME: arm64
+          - os: windows-latest
+            GOOS: windows
+            GOARCH: amd64
+            ARCHNAME: amd64
+          - os: ubuntu-latest
+            GOOS: linux
+            GOARCH: amd64
+            ARCHNAME: amd64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Install Fyne CLI (for macOS)
+        if: matrix.GOOS == 'darwin'
+        run: go install fyne.io/fyne/v2/cmd/fyne@latest
+
+      - name: Build binary / package
+        run: |
+          mkdir -p dist
+          echo "Building for ${{ matrix.GOOS }}-${{ matrix.GOARCH }}"
+
+          if [ "${{ matrix.GOOS }}" = "darwin" ]; then
+            fyne package -os darwin -icon app.png -name "Backlog Manager"
+            mv "Backlog Manager.dmg" "dist/backlog-manager-darwin-${{ matrix.ARCHNAME }}.dmg"
+          elif [ "${{ matrix.GOOS }}" = "windows" ]; then
+            GOOS=${{ matrix.GOOS }} GOARCH=${{ matrix.GOARCH }} go build -ldflags "-s -w" -o "dist/backlog-manager-windows-${{ matrix.ARCHNAME }}.exe" .
+          else
+            GOOS=${{ matrix.GOOS }} GOARCH=${{ matrix.GOARCH }} go build -ldflags "-s -w" -o "dist/backlog-manager-linux-${{ matrix.ARCHNAME }}" .
+          fi
+
+      - name: Create source archive
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          zip -r dist/backlog-manager-source.zip . -x '*.git*' 'dist/*'
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backlog-manager-${{ matrix.GOOS }}-${{ matrix.ARCHNAME }}
+          path: dist/
+
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/**/backlog-manager-darwin-intel.dmg
+            dist/**/backlog-manager-darwin-arm64.dmg
+            dist/**/backlog-manager-windows-amd64.exe
+            dist/**/backlog-manager-linux-amd64
+            dist/**/backlog-manager-source.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

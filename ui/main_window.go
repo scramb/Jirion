@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"backlog-manager/internal/models"
+	"github.com/scramb/backlog-manager/internal/models"
 	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
