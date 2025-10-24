@@ -55,8 +55,6 @@ jobs:
             mv "Backlog Manager.dmg" "dist/backlog-manager-darwin-${{ matrix.ARCHNAME }}.dmg"
           elif [ "${{ matrix.GOOS }}" = "windows" ]; then
             GOOS=${{ matrix.GOOS }} GOARCH=${{ matrix.GOARCH }} go build -ldflags "-s -w" -o "dist/backlog-manager-windows-${{ matrix.ARCHNAME }}.exe" .
-          else
-            GOOS=${{ matrix.GOOS }} GOARCH=${{ matrix.GOARCH }} go build -ldflags "-s -w" -o "dist/backlog-manager-linux-${{ matrix.ARCHNAME }}" .
           fi
 
       - name: Create source archive
@@ -86,7 +84,6 @@ jobs:
             dist/**/backlog-manager-darwin-intel.dmg
             dist/**/backlog-manager-darwin-arm64.dmg
             dist/**/backlog-manager-windows-amd64.exe
-            dist/**/backlog-manager-linux-amd64
             dist/**/backlog-manager-source.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
