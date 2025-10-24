@@ -48,7 +48,7 @@ jobs:
           echo "Building for ${{ matrix.GOOS }}-${{ matrix.GOARCH }}"
 
           if [ "${{ matrix.GOOS }}" = "darwin" ]; then
-            fyne package -os darwin -icon app.png -name "Backlog Manager"
+            fyne package -os darwin -icon assets/app.png -name "Backlog Manager"
             mv "Backlog Manager.dmg" "dist/backlog-manager-darwin-${{ matrix.ARCHNAME }}.dmg"
           elif [ "${{ matrix.GOOS }}" = "windows" ]; then
             GOOS=${{ matrix.GOOS }} GOARCH=${{ matrix.GOARCH }} go build -ldflags "-s -w" -o "dist/backlog-manager-windows-${{ matrix.ARCHNAME }}.exe" .
