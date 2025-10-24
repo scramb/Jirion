@@ -10,7 +10,7 @@ func ShowSetupWizard(w fyne.Window, a fyne.App) {
 	prefs := a.Preferences()
 
 	domainEntry := widget.NewEntry()
-	domainEntry.SetPlaceHolder("z. B. bauhaus-de.atlassian.net")
+	domainEntry.SetPlaceHolder("z. B. my-jira-space")
 
 	userEntry := widget.NewEntry()
 	userEntry.SetPlaceHolder("E-Mail-Adresse")
