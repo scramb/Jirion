@@ -91,7 +91,7 @@ Bei einem Release werden automatisch erstellt:
 
 ### Erster Start
 Beim ersten Start öffnet sich automatisch der **Setup Wizard**.  
-Trage dort deine Jira-Instanz (z. B. `bauhaus-de.atlassian.net`), deine E-Mail und dein API-Token ein.
+Trage dort deine Jira-Instanz (z. B. `<jira-space>.atlassian.net`), deine E-Mail und dein API-Token ein.
 
 ### Hauptansicht
 - **Create Backlog** → Neues Ticket anlegen (Typ, Titel, Beschreibung, **Labels**).
