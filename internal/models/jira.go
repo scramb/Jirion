@@ -65,7 +65,7 @@ func FetchAssignedIssues(domain, email, apiToken string) ([]JiraIssue, error) {
 
 	if res.StatusCode != 200 {
 		body, _ := io.ReadAll(res.Body)
-		return nil, fmt.Errorf("Jira API error (%d): %s", res.StatusCode, string(body))
+		return nil, fmt.Errorf("jira api error (%d): %s", res.StatusCode, string(body))
 	}
 
 	var result JiraSearchResult
@@ -163,7 +163,7 @@ func FetchFavouriteProjects(domain, email, token string) ([]JiraProject, error) 
 
 	if res.StatusCode != 200 {
 		body, _ := io.ReadAll(res.Body)
-		return nil, fmt.Errorf("Jira API error (%d): %s", res.StatusCode, string(body))
+		return nil, fmt.Errorf("jira api error (%d): %s", res.StatusCode, string(body))
 	}
 
 	var result JiraProjectResult
@@ -249,7 +249,7 @@ func FetchProjectIssueTypes(domain, email, token, projectKey string) ([]JiraIssu
 
 	if res.StatusCode != 200 {
 		body, _ := io.ReadAll(res.Body)
-		return nil, fmt.Errorf("Jira API error (%d): %s", res.StatusCode, string(body))
+		return nil, fmt.Errorf("jira api error (%d): %s", res.StatusCode, string(body))
 	}
 
 	var data JiraCreateMetaResponse
@@ -289,7 +289,7 @@ func FetchAllProjects(domain, email, token string) ([]JiraProject, error) {
 
 	if res.StatusCode != http.StatusOK {
 		b, _ := io.ReadAll(res.Body)
-		return nil, fmt.Errorf("Jira API error (%d): %s", res.StatusCode, string(b))
+		return nil, fmt.Errorf("jira api error (%d): %s", res.StatusCode, string(b))
 	}
 
 	var out JiraProjectResult
@@ -325,7 +325,7 @@ func FetchProjectLabels(domain, email, token, projectKey string) ([]string, erro
 
 	if res.StatusCode != http.StatusOK {
 		b, _ := io.ReadAll(res.Body)
-		return nil, fmt.Errorf("Jira API error (%d): %s", res.StatusCode, string(b))
+		return nil, fmt.Errorf("jira api error (%d): %s", res.StatusCode, string(b))
 	}
 
 	var data jiraSearchResult
