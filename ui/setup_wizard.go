@@ -1,9 +1,13 @@
 package ui
 
 import (
+	"log"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+
+	"github.com/scramb/backlog-manager/internal/models"
 )
 
 func ShowSetupWizard(w fyne.Window, a fyne.App) {
@@ -19,9 +23,16 @@ func ShowSetupWizard(w fyne.Window, a fyne.App) {
 	tokenEntry.SetPlaceHolder("Jira API Token")
 
 	saveBtn := widget.NewButton("Speichern & Starten", func() {
+		encryptedToken, err := models.Encrypt(tokenEntry.Text)
+		if err != nil {
+			log.Printf("Fehler beim Verschlüsseln des Tokens: %v", err)
+			return
+		}
+
 		prefs.SetString("jira_domain", domainEntry.Text)
 		prefs.SetString("jira_user", userEntry.Text)
-		prefs.SetString("jira_token", tokenEntry.Text)
+		prefs.SetString("jira_token", encryptedToken)
+
 		ShowMainApp(w, a, domainEntry.Text, userEntry.Text, tokenEntry.Text)
 	})
 

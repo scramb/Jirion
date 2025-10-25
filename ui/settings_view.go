@@ -6,13 +6,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/scramb/backlog-manager/internal/models"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-
-	"github.com/scramb/backlog-manager/internal/models"
 )
 
 // SettingsView builds the ⚙️ Settings tab with sub-tabs for Jira and AI configuration.
@@ -37,7 +37,12 @@ func SettingsView(app fyne.App, w fyne.Window) fyne.CanvasObject {
 	jiraSaveBtn := widget.NewButtonWithIcon("Speichern", theme.ConfirmIcon(), func() {
 		prefs.SetString("jira_domain", domainEntry.Text)
 		prefs.SetString("jira_user", userEntry.Text)
-		prefs.SetString("jira_token", tokenEntry.Text)
+		encryptedToken, err := models.Encrypt(tokenEntry.Text)
+		if err != nil {
+			dialog.ShowError(fmt.Errorf("Fehler beim Verschlüsseln des Tokens: %w", err), w)
+			return
+		}
+		prefs.SetString("jira_token", encryptedToken)
 		dialog.ShowInformation("Gespeichert", "Jira-Einstellungen erfolgreich gespeichert!", w)
 	})
 
@@ -67,9 +72,15 @@ func SettingsView(app fyne.App, w fyne.Window) fyne.CanvasObject {
 	apiKeyEntry.SetText(prefs.String("openai_api_key"))
 
 	aiSaveBtn := widget.NewButtonWithIcon("Speichern", theme.ConfirmIcon(), func() {
+		encryptedKey, err := models.Encrypt(apiKeyEntry.Text)
+		if err != nil {
+			dialog.ShowError(fmt.Errorf("Fehler beim Verschlüsseln des API-Keys: %w", err), w)
+			return
+		}
+
 		prefs.SetString("ai_endpoint", endpointEntry.Text)
 		prefs.SetString("system_prompt", systemPromptEntry.Text)
-		prefs.SetString("openai_api_key", apiKeyEntry.Text)
+		prefs.SetString("openai_api_key", encryptedKey)
 		dialog.ShowInformation("Gespeichert", "AI-Einstellungen erfolgreich gespeichert!", w)
 	})
 

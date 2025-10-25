@@ -44,7 +44,8 @@ func GenerateBacklogContent(apiKey, endpoint, systemPrompt, userPrompt string) (
 
 	body, _ := json.Marshal(payload)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(body))
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", apiKey))
+	decryptedKey := tryDecrypt(apiKey)
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", decryptedKey))
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
