@@ -7,25 +7,21 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
+	"github.com/scramb/backlog-manager/internal/i18n"
 	"github.com/scramb/backlog-manager/internal/models"
 )
 
 func ShowSetupWizard(w fyne.Window, a fyne.App) {
 	prefs := a.Preferences()
 
-	domainEntry := widget.NewEntry()
-	domainEntry.SetPlaceHolder("z. B. my-jira-space")
+	domainEntry := i18n.BindEntryWithPlaceholder("setup.jira_domain_placeholder", false)
+	userEntry := i18n.BindEntryWithPlaceholder("setup.email_placeholder", false)
+	tokenEntry := i18n.BindEntryWithPlaceholder("setup.api_token_placeholder", true)
 
-	userEntry := widget.NewEntry()
-	userEntry.SetPlaceHolder("E-Mail-Adresse")
-
-	tokenEntry := widget.NewPasswordEntry()
-	tokenEntry.SetPlaceHolder("Jira API Token")
-
-	saveBtn := widget.NewButton("Speichern & Starten", func() {
+	saveBtn := i18n.BindButton("setup.save_start", nil, func() {
 		encryptedToken, err := models.Encrypt(tokenEntry.Text)
 		if err != nil {
-			log.Printf("Fehler beim Verschlüsseln des Tokens: %v", err)
+			log.Printf("%s %v", i18n.T("setup.encrypt_error"), err)
 			return
 		}
 
@@ -37,12 +33,12 @@ func ShowSetupWizard(w fyne.Window, a fyne.App) {
 	})
 
 	form := container.NewVBox(
-		widget.NewLabelWithStyle("Willkommen! Bitte Jira-Zugangsdaten eingeben:", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-		widget.NewLabel("Jira Domain:"),
+		widget.NewLabelWithStyle(i18n.BindLabel("setup.title").Text, fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		i18n.BindLabel("setup.jira_domain"),
 		domainEntry,
-		widget.NewLabel("E-Mail:"),
+		i18n.BindLabel("setup.email"),
 		userEntry,
-		widget.NewLabel("API Token:"),
+		i18n.BindLabel("setup.api_token"),
 		tokenEntry,
 		saveBtn,
 	)

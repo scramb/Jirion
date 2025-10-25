@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"strings"
+
+	"fyne.io/fyne/v2"
 )
 
 type OpenAIRequest struct {
@@ -25,6 +27,55 @@ type OpenAIResponse struct {
 	} `json:"choices"`
 }
 
+type OpenAIModelList struct {
+	Data []struct {
+		ID string `json:"id"`
+	} `json:"data"`
+}
+
+// FetchAvailableModels fetches model IDs from the OpenAI-like /models endpoint.
+func FetchAvailableModels(endpoint, apiKey string) ([]string, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/models", endpoint), nil)
+	if err != nil {
+		return nil, err
+	}
+
+decryptedToken := strings.TrimSpace(tryDecrypt(apiKey))
+// Falls jemand versehentlich einen bereits verschlüsselten Wert gespeichert hat:
+if !strings.HasPrefix(decryptedToken, "sk-") {
+    second := strings.TrimSpace(tryDecrypt(decryptedToken))
+    if strings.HasPrefix(second, "sk-") {
+        decryptedToken = second
+    }
+}
+
+// Standard: OpenAI-kompatibel → Bearer + sk-...
+req.Header.Set("Authorization", "Bearer "+decryptedToken)
+req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("model fetch failed: %s", string(body))
+	}
+
+	var modelList OpenAIModelList
+	if err := json.NewDecoder(resp.Body).Decode(&modelList); err != nil {
+		return nil, err
+	}
+
+	models := make([]string, len(modelList.Data))
+	for i, m := range modelList.Data {
+		models[i] = m.ID
+	}
+	return models, nil
+}
+
 func GenerateBacklogContent(apiKey, endpoint, systemPrompt, userPrompt string) (string, error) {
 	if endpoint == "" {
 		endpoint = "https://api.openai.com/v1" // fallback
@@ -34,8 +85,14 @@ func GenerateBacklogContent(apiKey, endpoint, systemPrompt, userPrompt string) (
 	}
 	url := endpoint + "/chat/completions"
 
+	prefs := fyne.CurrentApp().Preferences()
+	selectedModel := prefs.String("openai_model")
+	if selectedModel == "" {
+		selectedModel = "azure-gpt-4.1"
+	}
+
 	payload := map[string]interface{}{
-		"model": "gpt-4o-mini",
+		"model": selectedModel,
 		"messages": []map[string]string{
 			{"role": "system", "content": systemPrompt},
 			{"role": "user", "content": userPrompt},

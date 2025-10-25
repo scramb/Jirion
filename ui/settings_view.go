@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/scramb/backlog-manager/internal/i18n"
 	"github.com/scramb/backlog-manager/internal/models"
 
 	"fyne.io/fyne/v2"
@@ -22,44 +23,40 @@ func SettingsView(app fyne.App, w fyne.Window) fyne.CanvasObject {
 	isSettingLabels := false
 
 	// === Jira Configuration ===
-	domainEntry := widget.NewEntry()
-	domainEntry.SetPlaceHolder("z. B. mycompany")
+	domainEntry := i18n.BindEntryWithPlaceholder("settings.jira_domain_placeholder", false)
 	domainEntry.SetText(prefs.String("jira_domain"))
 
-	userEntry := widget.NewEntry()
-	userEntry.SetPlaceHolder("E-Mail")
+	userEntry := i18n.BindEntryWithPlaceholder("settings.jira_user_placeholder", false)
 	userEntry.SetText(prefs.String("jira_user"))
 
-	tokenEntry := widget.NewPasswordEntry()
-	tokenEntry.SetPlaceHolder("API Token")
+	tokenEntry := i18n.BindEntryWithPlaceholder("settings.jira_token_placeholder", true)
 	tokenEntry.SetText(prefs.String("jira_token"))
 
-	jiraSaveBtn := widget.NewButtonWithIcon("Speichern", theme.ConfirmIcon(), func() {
+	jiraSaveBtn := i18n.BindButton("settings.save", theme.ConfirmIcon(), func() {
 		prefs.SetString("jira_domain", domainEntry.Text)
 		prefs.SetString("jira_user", userEntry.Text)
 		encryptedToken, err := models.Encrypt(tokenEntry.Text)
 		if err != nil {
-			dialog.ShowError(fmt.Errorf("Fehler beim Verschlüsseln des Tokens: %w", err), w)
+			dialog.ShowError(fmt.Errorf(i18n.T("settings.error_encrypt_token")+": %w", err), w)
 			return
 		}
 		prefs.SetString("jira_token", encryptedToken)
-		dialog.ShowInformation("Gespeichert", "Jira-Einstellungen erfolgreich gespeichert!", w)
+		dialog.ShowInformation(i18n.T("settings.saved_title"), i18n.T("settings.jira_saved"), w)
 	})
 
 	jiraForm := container.NewVBox(
-		widget.NewLabelWithStyle("Jira Konfiguration", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel("Jira-Domain"),
+		widget.NewLabelWithStyle(i18n.T("settings.jira_config"), fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		i18n.BindLabel("settings.jira_domain"),
 		domainEntry,
-		widget.NewLabel("E-Mail"),
+		i18n.BindLabel("settings.jira_user"),
 		userEntry,
-		widget.NewLabel("API Token"),
+		i18n.BindLabel("settings.jira_token"),
 		tokenEntry,
 		jiraSaveBtn,
 	)
 
 	// === AI Configuration ===
-	endpointEntry := widget.NewEntry()
-	endpointEntry.SetPlaceHolder("z. B. https://api.openai.com/v1")
+	endpointEntry := i18n.BindEntryWithPlaceholder("settings.ai_endpoint_placeholder", false)
 	endpointEntry.SetText(prefs.String("ai_endpoint"))
 	if endpointEntry.Text == "" {
 		endpointEntry.SetText("https://api.openai.com/v1") // default
@@ -68,35 +65,76 @@ func SettingsView(app fyne.App, w fyne.Window) fyne.CanvasObject {
 	systemPromptEntry := widget.NewMultiLineEntry()
 	systemPromptEntry.SetText(prefs.String("system_prompt"))
 
-	apiKeyEntry := widget.NewPasswordEntry()
-	apiKeyEntry.SetText(prefs.String("openai_api_key"))
+	apiKeyEntry := i18n.BindEntryWithPlaceholder("settings.api_key", true)
 
-	aiSaveBtn := widget.NewButtonWithIcon("Speichern", theme.ConfirmIcon(), func() {
-		encryptedKey, err := models.Encrypt(apiKeyEntry.Text)
-		if err != nil {
-			dialog.ShowError(fmt.Errorf("Fehler beim Verschlüsseln des API-Keys: %w", err), w)
+	// Model select for OpenAI-compatible models
+	modelSelect := widget.NewSelect([]string{i18n.T("settings.loading_models")}, nil)
+	modelSelect.PlaceHolder = i18n.T("settings.select_model")
+
+	// Load available models in background
+	go func() {
+		domain := prefs.String("ai_endpoint")
+		apiKey := prefs.String("openai_api_key")
+		if apiKey == "" {
 			return
 		}
+		modelsList, err := models.FetchAvailableModels(domain, apiKey)
+		if err != nil {
+			fyne.Do(func() { dialog.ShowError(err, w) })
+			return
+		}
+		fyne.Do(func() {
+			modelSelect.Options = modelsList
+			modelSelect.Refresh()
+			savedModel := prefs.String("openai_model")
+			if savedModel != "" {
+				modelSelect.SetSelected(savedModel)
+			}
+		})
+	}()
 
-		prefs.SetString("ai_endpoint", endpointEntry.Text)
-		prefs.SetString("system_prompt", systemPromptEntry.Text)
+	modelSelect.OnChanged = func(selected string) {
+		prefs.SetString("openai_model", selected)
+	}
+
+	aiSaveBtn := i18n.BindButton("settings.save", theme.ConfirmIcon(), func() {
+		encryptedKey, err := models.Encrypt(apiKeyEntry.Text)
+		if err != nil {
+			dialog.ShowError(fmt.Errorf(i18n.T("settings.error_encrypt_api_key")+": %w", err), w)
+			return
+		}
+prefs.SetString("ai_endpoint", endpointEntry.Text)
+prefs.SetString("system_prompt", systemPromptEntry.Text)
+
+if strings.TrimSpace(apiKeyEntry.Text) != "" {
+    encryptedKey, err := models.Encrypt(apiKeyEntry.Text)
+    if err != nil {
+        dialog.ShowError(fmt.Errorf(i18n.T("settings.error_encrypt_api_key")+": %w", err), w)
+        return
+    }
+    prefs.SetString("openai_api_key", encryptedKey)
+}
+// Wenn leer gelassen, bleibt der bestehende (bereits verschlüsselte) Key erhalten
+dialog.ShowInformation(i18n.T("settings.saved_title"), i18n.T("settings.ai_saved"), w)
 		prefs.SetString("openai_api_key", encryptedKey)
-		dialog.ShowInformation("Gespeichert", "AI-Einstellungen erfolgreich gespeichert!", w)
+		dialog.ShowInformation(i18n.T("settings.saved_title"), i18n.T("settings.ai_saved"), w)
 	})
 
 	aiForm := container.NewVBox(
-		widget.NewLabelWithStyle("AI Konfiguration", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel("AI Endpoint"),
+		widget.NewLabelWithStyle(i18n.T("settings.ai_config"), fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		i18n.BindLabel("settings.ai_endpoint"),
 		endpointEntry,
-		widget.NewLabel("System Prompt"),
+		i18n.BindLabel("settings.system_prompt"),
 		systemPromptEntry,
-		widget.NewLabel("API Key"),
+		i18n.BindLabel("settings.api_key"),
 		apiKeyEntry,
+		i18n.BindLabel("settings.model"),
+		modelSelect,
 		aiSaveBtn,
 	)
 
 	// === Label Configuration ===
-	projectSelect := widget.NewSelect([]string{"Lade Projekte..."}, nil)
+	projectSelect := widget.NewSelect([]string{i18n.T("settings.loading_projects")}, nil)
 	labelsGroup := widget.NewCheckGroup([]string{}, nil) // selection handling will be added later
 
 	labelsGroup.OnChanged = func(selected []string) {
@@ -113,16 +151,16 @@ func SettingsView(app fyne.App, w fyne.Window) fyne.CanvasObject {
 		key := fmt.Sprintf("label_selection_%s", projectKey)
 		data, _ := json.Marshal(selected)
 		app.Preferences().SetString(key, string(data))
-		fmt.Println("Saved labels for", projectKey, "=>", selected)
-		fmt.Println("Confirm saved value:", app.Preferences().String(key))
+		fmt.Println(i18n.T("settings.saved_labels_for"), projectKey, "=>", selected)
+		fmt.Println(i18n.T("settings.confirm_saved_value"), app.Preferences().String(key))
 	}
 
-	saveLabelsBtn := widget.NewButtonWithIcon("Speichern", theme.ConfirmIcon(), func() {
+	saveLabelsBtn := i18n.BindButton("settings.save", theme.ConfirmIcon(), func() {
 		selectedProj := projectSelect.Selected
 		start := strings.LastIndex(selectedProj, "(")
 		end := strings.LastIndex(selectedProj, ")")
 		if start == -1 || end == -1 || start >= end {
-			dialog.ShowInformation("Hinweis", "Bitte zuerst ein Projekt auswählen.", w)
+			dialog.ShowInformation(i18n.T("settings.notice"), i18n.T("settings.select_project_first"), w)
 			return
 		}
 		projectKey := selectedProj[start+1 : end]
@@ -130,9 +168,9 @@ func SettingsView(app fyne.App, w fyne.Window) fyne.CanvasObject {
 		key := fmt.Sprintf("label_selection_%s", projectKey)
 		data, _ := json.Marshal(selected)
 		app.Preferences().SetString(key, string(data))
-		fmt.Println("Manuell gespeichert für", projectKey, "=>", selected)
-		fmt.Println("Confirm saved value:", app.Preferences().String(key))
-		dialog.ShowInformation("Gespeichert", fmt.Sprintf("Labels für %s gespeichert!", projectKey), w)
+		fmt.Println(i18n.T("settings.manually_saved_for"), projectKey, "=>", selected)
+		fmt.Println(i18n.T("settings.confirm_saved_value"), app.Preferences().String(key))
+		dialog.ShowInformation(i18n.T("settings.saved_title"), fmt.Sprintf(i18n.T("settings.labels_saved_for"), projectKey), w)
 	})
 
 	// Load projects (all visible). Fallback to favourites on error.
@@ -206,14 +244,14 @@ func SettingsView(app fyne.App, w fyne.Window) fyne.CanvasObject {
 					fyne.Do(func() {
 						key := fmt.Sprintf("label_selection_%s", projectKey)
 						saved := prefs.String(key)
-						fmt.Println("Loaded saved JSON for", projectKey, "=>", saved)
+						fmt.Println(i18n.T("settings.loaded_saved_json_for"), projectKey, "=>", saved)
 						if saved != "" {
 							var selectedLabels []string
 							if err := json.Unmarshal([]byte(saved), &selectedLabels); err == nil {
 								isRestoring = true
 								labelsGroup.SetSelected(selectedLabels)
 								isRestoring = false
-								fmt.Println("Restored labels for", projectKey, "=>", selectedLabels)
+								fmt.Println(i18n.T("settings.restored_labels_for"), projectKey, "=>", selectedLabels)
 							}
 						}
 						labelsGroup.Refresh()
@@ -227,24 +265,61 @@ func SettingsView(app fyne.App, w fyne.Window) fyne.CanvasObject {
 
 	labelConfig := container.NewBorder(
 		container.NewVBox(
-			widget.NewLabelWithStyle("Label Config", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-			widget.NewLabel("Projekt"),
+			widget.NewLabelWithStyle(i18n.T("settings.label_config"), fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+			i18n.BindLabel("settings.project"),
 			projectSelect,
 			saveLabelsBtn,
 			widget.NewSeparator(),
-			widget.NewLabel("Labels im Projekt"),
+			i18n.BindLabel("settings.labels_in_project"),
 		),
 		nil, nil, nil,
 		container.NewVScroll(labelsGroup),
 	)
 
+	// === App Configuration ===
+	languageSelect := widget.NewSelect([]string{"en", "de"}, func(selected string) {
+		prefs.SetString("lang", selected)
+		if err := i18n.LoadLanguage(selected); err != nil {
+			dialog.ShowError(fmt.Errorf(i18n.T("settings.error_load_language")+": %w", err), w)
+			return
+		}
+		// Sprache wird stillschweigend geändert, kein Popup
+	})
+	languageSelect.SetSelected(prefs.StringWithFallback("lang", "en"))
+
+	appConfigForm := container.NewVBox(
+		widget.NewLabelWithStyle(i18n.T("settings.app_config"), fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		i18n.BindLabel("settings.language"),
+		languageSelect,
+	)
+
 	// === Sub-Tabs ===
 	subTabs := container.NewAppTabs(
-		container.NewTabItem("Jira Config", jiraForm),
-		container.NewTabItem("AI Config", aiForm),
-		container.NewTabItem("Label Config", labelConfig),
+		container.NewTabItem(i18n.T("settings.jira_config"), jiraForm),
+		container.NewTabItem(i18n.T("settings.ai_config"), aiForm),
+		container.NewTabItem(i18n.T("settings.label_config"), labelConfig),
+		container.NewTabItem(i18n.T("settings.app_config"), appConfigForm),
 	)
 	subTabs.SetTabLocation(container.TabLocationTop)
+
+i18n.RegisterOnLanguageChange(func() {
+    fyne.Do(func() {
+        subTabs.Items[0].Text = i18n.T("settings.jira_config")
+        subTabs.Items[1].Text = i18n.T("settings.ai_config")
+        subTabs.Items[2].Text = i18n.T("settings.label_config")
+        subTabs.Items[3].Text = i18n.T("settings.app_config")
+
+        // Jira section
+        jiraSaveBtn.SetText(i18n.T("settings.save"))
+
+        // AI section
+        aiSaveBtn.SetText(i18n.T("settings.save"))
+
+        // App Config
+        languageSelect.PlaceHolder = i18n.T("settings.language")
+        subTabs.Refresh()
+    })
+})
 
 	return subTabs
 }

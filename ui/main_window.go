@@ -3,6 +3,8 @@ package ui
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+
+	"github.com/scramb/backlog-manager/internal/i18n"
 )
 
 // showMainApp initializes the main application window after login.
@@ -16,19 +18,30 @@ func ShowMainApp(w fyne.Window, app fyne.App, domain, user, token string) {
 
 	// Build tab container
 	tabs := container.NewAppTabs(
-		container.NewTabItem("📝 Create Backlog", createView),
-		container.NewTabItem("🎫 My Tickets", ticketsView),
-		container.NewTabItem("⚙️ Settings", settingsView),
+		container.NewTabItem(i18n.T("tab.create_backlog"), createView),
+		container.NewTabItem(i18n.T("tab.my_tickets"), ticketsView),
+		container.NewTabItem(i18n.T("tab.settings"), settingsView),
 	)
 
-	tabs.OnChanged = func(tab *container.TabItem) {
-		if tab.Text == "🎫 My Tickets" {
+	i18n.RegisterOnLanguageChange(func() {
+		fyne.Do(func() {
+			tabs.Items[0].Text = i18n.T("tab.create_backlog")
+			tabs.Items[1].Text = i18n.T("tab.my_tickets")
+			tabs.Items[2].Text = i18n.T("tab.settings")
+			tabs.Refresh()
+			w.SetTitle(i18n.T("app.title"))
+		})
+	})
+
+	tabs.OnSelected = func(tab *container.TabItem) {
+		if tab.Text == i18n.T("tab.my_tickets") {
 			reloadTickets <- true
 		}
 	}
 
 	// Set up window
 	w.SetContent(tabs)
-	w.SetTitle("Backlog Manager")
+
+	w.SetTitle(i18n.T("app.title"))
 	w.Resize(fyne.NewSize(800, 600))
 }

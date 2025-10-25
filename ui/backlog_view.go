@@ -10,6 +10,7 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"github.com/scramb/backlog-manager/internal/i18n"
 	"github.com/scramb/backlog-manager/internal/models"
 )
 
@@ -23,15 +24,15 @@ func BacklogView(app fyne.App, w fyne.Window, domain, user, token string) fyne.C
 	contentEntry.Wrapping = fyne.TextWrapWord
 	contentEntry.SetMinRowsVisible(10)
 
-	projectSelect := widget.NewSelect([]string{"Lade Projekte..."}, nil)
-	issueType := widget.NewSelect([]string{"Lade..."}, nil)
+	projectSelect := widget.NewSelect([]string{i18n.T("backlog.load_projects")}, nil)
+	issueType := widget.NewSelect([]string{i18n.T("backlog.load_types")}, nil)
 	issueType.Disable()
 
 	labelChecks := map[string]*widget.Check{}
 	updateLabelsGrid := func(savedLabels []string) fyne.CanvasObject {
 		numLabels := len(savedLabels)
 		if numLabels == 0 {
-			return widget.NewLabel("Keine gespeicherten Labels gefunden")
+			return i18n.BindLabel("backlog.no_labels")
 		}
 
 		labelsPerRow := 5
@@ -48,17 +49,17 @@ func BacklogView(app fyne.App, w fyne.Window, domain, user, token string) fyne.C
 		grid := container.NewGridWithColumns(labelsPerRow, gridObjects...)
 		return container.NewVBox(grid)
 	}
-	labelsGrid := container.NewVBox(widget.NewLabel("Lade Labels..."))
+	labelsGrid := container.NewVBox(i18n.BindLabel("backlog.load_types"))
 
-	createBtn := widget.NewButton("Erstellen", nil)
+	createBtn := i18n.BindButton("backlog.create", nil, nil)
 
 	// zuerst deklarieren, aber noch ohne Handler
-	generateBtn := widget.NewButtonWithIcon("KI-Vorschlag generieren", theme.ComputerIcon(), nil)
+	generateBtn := i18n.BindButton("backlog.ai_generate", theme.ComputerIcon(), nil)
 	// Disable generate if no AI endpoint configured
 	if app.Preferences().String("ai_endpoint") == "" {
 		generateBtn.Disable()
 		fyne.Do(func() {
-			dialog.ShowInformation("KI deaktiviert", "Bitte AI Endpoint in den Einstellungen konfigurieren, um KI-Vorschläge zu aktivieren.", w)
+			dialog.ShowInformation(i18n.T("backlog.ai_disabled_title"), i18n.T("backlog.ai_disabled_message"), w)
 		})
 	}
 
@@ -74,13 +75,13 @@ func BacklogView(app fyne.App, w fyne.Window, domain, user, token string) fyne.C
 			apiKey := app.Preferences().String("openai_api_key")
 			if apiKey == "" {
 				fyne.Do(func() {
-					dialog.ShowInformation("Fehler", "Kein OpenAI API-Key hinterlegt. Bitte in den Einstellungen setzen.", w)
+					dialog.ShowInformation(i18n.T("backlog.error"), i18n.T("backlog.ai_missing_key"), w)
 					generateBtn.Enable()
 				})
 				return
 			}
 
-			userPrompt := fmt.Sprintf("Erstelle eine Jira-Story basierend auf dem Titel: '%s'", titleEntry.Text)
+			userPrompt := fmt.Sprintf("%s '%s'", i18n.T("backlog.ai_generate_prompt"), titleEntry.Text)
 			endpoint := app.Preferences().String("ai_endpoint")
 			result, err := models.GenerateBacklogContent(apiKey, endpoint, systemPrompt, userPrompt)
 			fyne.Do(func() {
@@ -123,7 +124,7 @@ func BacklogView(app fyne.App, w fyne.Window, domain, user, token string) fyne.C
 		}
 		projectKey := selected[start+1 : end]
 
-		issueType.Options = []string{"Lade..."}
+		issueType.Options = []string{i18n.T("backlog.load_types")}
 		issueType.Disable()
 		issueType.Refresh()
 
@@ -159,7 +160,7 @@ func BacklogView(app fyne.App, w fyne.Window, domain, user, token string) fyne.C
 					grid := updateLabelsGrid(savedLabels)
 					labelsGrid.Objects = []fyne.CanvasObject{grid}
 				} else {
-					labelsGrid.Objects = []fyne.CanvasObject{widget.NewLabel("Keine gespeicherten Labels gefunden")}
+					labelsGrid.Objects = []fyne.CanvasObject{i18n.BindLabel("backlog.no_labels")}
 				}
 				labelsGrid.Refresh()
 			})
@@ -173,7 +174,7 @@ func BacklogView(app fyne.App, w fyne.Window, domain, user, token string) fyne.C
 			if projectSelect.Selected == "" || issueType.Selected == "" || titleEntry.Text == "" {
 				fyne.Do(func() {
 					createBtn.Enable()
-					dialog.ShowInformation("Fehler", "Bitte alle Felder ausfüllen.", w)
+					dialog.ShowInformation(i18n.T("backlog.error"), i18n.T("backlog.error_fields"), w)
 				})
 				return
 			}
@@ -183,7 +184,7 @@ func BacklogView(app fyne.App, w fyne.Window, domain, user, token string) fyne.C
 			if start == -1 || end == -1 || start >= end {
 				fyne.Do(func() {
 					createBtn.Enable()
-					dialog.ShowInformation("Fehler", "Ungültiges Projektformat.", w)
+					dialog.ShowInformation(i18n.T("backlog.error"), i18n.T("backlog.error_project_format"), w)
 				})
 				return
 			}
@@ -193,7 +194,7 @@ func BacklogView(app fyne.App, w fyne.Window, domain, user, token string) fyne.C
 			if selectedType == "" {
 				fyne.Do(func() {
 					createBtn.Enable()
-					dialog.ShowInformation("Fehler", "Bitte Issue Type auswählen.", w)
+					dialog.ShowInformation(i18n.T("backlog.error"), i18n.T("backlog.error_issue_type"), w)
 				})
 				return
 			}
@@ -212,7 +213,7 @@ func BacklogView(app fyne.App, w fyne.Window, domain, user, token string) fyne.C
 					dialog.ShowError(err, w)
 					return
 				}
-				dialog.ShowInformation("Erstellt", "Backlog Item erfolgreich erstellt!", w)
+				dialog.ShowInformation(i18n.T("backlog.dialog_created"), i18n.T("backlog.created"), w)
 				titleEntry.SetText("")
 				contentEntry.SetText("")
 			})
@@ -220,16 +221,15 @@ func BacklogView(app fyne.App, w fyne.Window, domain, user, token string) fyne.C
 	}
 
 	topControls := container.NewVBox(
-		widget.NewLabelWithStyle("📝 Create Backlog", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel("Projekt"),
+		i18n.BindLabel("backlog.header"),
+		i18n.BindLabel("backlog.project"),
 		projectSelect,
-		widget.NewLabel("Typ"),
+		i18n.BindLabel("backlog.type"),
 		issueType,
-		widget.NewLabel("Labels"),
-		widget.NewLabel("Titel"),
+		i18n.BindLabel("backlog.title"),
 		titleEntry,
 		labelsGrid,
-		widget.NewLabel("Beschreibung"),
+		i18n.BindLabel("backlog.description"),
 		generateBtn,
 	)
 	createForm := container.NewBorder(topControls, createBtn, nil, nil, contentEntry)

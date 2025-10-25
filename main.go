@@ -1,9 +1,12 @@
 package main
 
 import (
-	"fyne.io/fyne/v2/app"
-	"github.com/scramb/backlog-manager/ui"
+	"fmt"
 	"os"
+
+	"fyne.io/fyne/v2/app"
+	"github.com/scramb/backlog-manager/internal/i18n"
+	"github.com/scramb/backlog-manager/ui"
 )
 
 func main() {
@@ -17,7 +20,10 @@ func main() {
 	domain := prefs.String("jira_domain")
 	user := prefs.String("jira_user")
 	token := prefs.String("jira_token")
-
+	lang := prefs.StringWithFallback("lang", "en")
+	if err := i18n.LoadLanguage(lang); err != nil {
+		fmt.Println("Failed to load language:", err)
+	}
 	if domain == "" || user == "" || token == "" {
 		ui.ShowSetupWizard(w, a)
 	} else {
