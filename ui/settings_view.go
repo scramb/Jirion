@@ -103,19 +103,19 @@ func SettingsView(app fyne.App, w fyne.Window) fyne.CanvasObject {
 			dialog.ShowError(fmt.Errorf(i18n.T("settings.error_encrypt_api_key")+": %w", err), w)
 			return
 		}
-prefs.SetString("ai_endpoint", endpointEntry.Text)
-prefs.SetString("system_prompt", systemPromptEntry.Text)
+		prefs.SetString("ai_endpoint", endpointEntry.Text)
+		prefs.SetString("system_prompt", systemPromptEntry.Text)
 
-if strings.TrimSpace(apiKeyEntry.Text) != "" {
-    encryptedKey, err := models.Encrypt(apiKeyEntry.Text)
-    if err != nil {
-        dialog.ShowError(fmt.Errorf(i18n.T("settings.error_encrypt_api_key")+": %w", err), w)
-        return
-    }
-    prefs.SetString("openai_api_key", encryptedKey)
-}
-// Wenn leer gelassen, bleibt der bestehende (bereits verschlüsselte) Key erhalten
-dialog.ShowInformation(i18n.T("settings.saved_title"), i18n.T("settings.ai_saved"), w)
+		if strings.TrimSpace(apiKeyEntry.Text) != "" {
+			encryptedKey, err := models.Encrypt(apiKeyEntry.Text)
+			if err != nil {
+				dialog.ShowError(fmt.Errorf(i18n.T("settings.error_encrypt_api_key")+": %w", err), w)
+				return
+			}
+			prefs.SetString("openai_api_key", encryptedKey)
+		}
+		// Wenn leer gelassen, bleibt der bestehende (bereits verschlüsselte) Key erhalten
+		dialog.ShowInformation(i18n.T("settings.saved_title"), i18n.T("settings.ai_saved"), w)
 		prefs.SetString("openai_api_key", encryptedKey)
 		dialog.ShowInformation(i18n.T("settings.saved_title"), i18n.T("settings.ai_saved"), w)
 	})
@@ -302,24 +302,24 @@ dialog.ShowInformation(i18n.T("settings.saved_title"), i18n.T("settings.ai_saved
 	)
 	subTabs.SetTabLocation(container.TabLocationTop)
 
-i18n.RegisterOnLanguageChange(func() {
-    fyne.Do(func() {
-        subTabs.Items[0].Text = i18n.T("settings.jira_config")
-        subTabs.Items[1].Text = i18n.T("settings.ai_config")
-        subTabs.Items[2].Text = i18n.T("settings.label_config")
-        subTabs.Items[3].Text = i18n.T("settings.app_config")
+	i18n.RegisterOnLanguageChange(func() {
+		fyne.Do(func() {
+			subTabs.Items[0].Text = i18n.T("settings.jira_config")
+			subTabs.Items[1].Text = i18n.T("settings.ai_config")
+			subTabs.Items[2].Text = i18n.T("settings.label_config")
+			subTabs.Items[3].Text = i18n.T("settings.app_config")
 
-        // Jira section
-        jiraSaveBtn.SetText(i18n.T("settings.save"))
+			// Jira section
+			jiraSaveBtn.SetText(i18n.T("settings.save"))
 
-        // AI section
-        aiSaveBtn.SetText(i18n.T("settings.save"))
+			// AI section
+			aiSaveBtn.SetText(i18n.T("settings.save"))
 
-        // App Config
-        languageSelect.PlaceHolder = i18n.T("settings.language")
-        subTabs.Refresh()
-    })
-})
+			// App Config
+			languageSelect.PlaceHolder = i18n.T("settings.language")
+			subTabs.Refresh()
+		})
+	})
 
 	return subTabs
 }

@@ -33,19 +33,19 @@ func BindButton(key string, icon fyne.Resource, tapped func()) *widget.Button {
 
 // BindEntry creates an Entry with live-updated placeholder text.
 func BindEntry(key string, password bool) *widget.Entry {
-    var entry *widget.Entry
-    if password {
-        entry = widget.NewPasswordEntry()
-    } else {
-        entry = widget.NewEntry()
-    }
-    entry.SetPlaceHolder(T(key))
-    RegisterOnLanguageChange(func() {
-        fyne.Do(func() {
-            entry.SetPlaceHolder(T(key))
-        })
-    })
-    return entry
+	var entry *widget.Entry
+	if password {
+		entry = widget.NewPasswordEntry()
+	} else {
+		entry = widget.NewEntry()
+	}
+	entry.SetPlaceHolder(T(key))
+	RegisterOnLanguageChange(func() {
+		fyne.Do(func() {
+			entry.SetPlaceHolder(T(key))
+		})
+	})
+	return entry
 }
 
 func BindEntryWithPlaceholder(key string, password bool) *widget.Entry {

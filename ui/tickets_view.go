@@ -175,55 +175,55 @@ func TicketsView(app fyne.App, w fyne.Window, domain, user, token string, reload
 			reloadBtn.SetText(i18n.T("tickets.reload"))
 			searchEntryWidget.SetPlaceHolder(i18n.T("tickets.search_placeholder"))
 
-		prevSelection := projectFilter.Selected
-		translatedAll := i18n.T("tickets.all_projects")
+			prevSelection := projectFilter.Selected
+			translatedAll := i18n.T("tickets.all_projects")
 
-		newOptions := []string{translatedAll}
-		for _, opt := range projectFilter.Options {
-			if opt != "All Projects" && opt != "Alle Projekte" {
-				newOptions = append(newOptions, opt)
+			newOptions := []string{translatedAll}
+			for _, opt := range projectFilter.Options {
+				if opt != "All Projects" && opt != "Alle Projekte" {
+					newOptions = append(newOptions, opt)
+				}
 			}
-		}
 
-		newSelect := widget.NewSelect(newOptions, func(selected string) {
-			applyFilter(selected)
-		})
+			newSelect := widget.NewSelect(newOptions, func(selected string) {
+				applyFilter(selected)
+			})
 
-		if prevSelection == "All Projects" || prevSelection == "Alle Projekte" {
-			newSelect.SetSelected(translatedAll)
-		} else {
-			newSelect.SetSelected(prevSelection)
-		}
+			if prevSelection == "All Projects" || prevSelection == "Alle Projekte" {
+				newSelect.SetSelected(translatedAll)
+			} else {
+				newSelect.SetSelected(prevSelection)
+			}
 
-		// Versuche, den Container sicher zu ersetzen
-		if len(contentContainer.Objects) == 0 {
-			return
-		}
+			// Versuche, den Container sicher zu ersetzen
+			if len(contentContainer.Objects) == 0 {
+				return
+			}
 
-		if content, ok := contentContainer.Objects[0].(*fyne.Container); ok {
-			if len(content.Objects) > 0 {
-				if border, ok := content.Objects[0].(*fyne.Container); ok {
-					if len(border.Objects) > 0 {
-						if header, ok := border.Objects[0].(*fyne.Container); ok {
-							for i, obj := range header.Objects {
-								if obj == projectFilter {
-									header.Objects[i] = newSelect
-									projectFilter = newSelect
-									contentContainer.Refresh()
-									return
+			if content, ok := contentContainer.Objects[0].(*fyne.Container); ok {
+				if len(content.Objects) > 0 {
+					if border, ok := content.Objects[0].(*fyne.Container); ok {
+						if len(border.Objects) > 0 {
+							if header, ok := border.Objects[0].(*fyne.Container); ok {
+								for i, obj := range header.Objects {
+									if obj == projectFilter {
+										header.Objects[i] = newSelect
+										projectFilter = newSelect
+										contentContainer.Refresh()
+										return
+									}
 								}
 							}
 						}
 					}
 				}
 			}
-		}
 
-		// 🧹 Falls der View gerade nicht der erwartete Container ist
-		// → einfach komplette Ansicht neu aufbauen
-		showListView()
+			// 🧹 Falls der View gerade nicht der erwartete Container ist
+			// → einfach komplette Ansicht neu aufbauen
+			showListView()
+		})
 	})
-})
 
 	go func() {
 		for range reloadChan {

@@ -40,18 +40,18 @@ func FetchAvailableModels(endpoint, apiKey string) ([]string, error) {
 		return nil, err
 	}
 
-decryptedToken := strings.TrimSpace(tryDecrypt(apiKey))
-// Falls jemand versehentlich einen bereits verschlüsselten Wert gespeichert hat:
-if !strings.HasPrefix(decryptedToken, "sk-") {
-    second := strings.TrimSpace(tryDecrypt(decryptedToken))
-    if strings.HasPrefix(second, "sk-") {
-        decryptedToken = second
-    }
-}
+	decryptedToken := strings.TrimSpace(tryDecrypt(apiKey))
+	// Falls jemand versehentlich einen bereits verschlüsselten Wert gespeichert hat:
+	if !strings.HasPrefix(decryptedToken, "sk-") {
+		second := strings.TrimSpace(tryDecrypt(decryptedToken))
+		if strings.HasPrefix(second, "sk-") {
+			decryptedToken = second
+		}
+	}
 
-// Standard: OpenAI-kompatibel → Bearer + sk-...
-req.Header.Set("Authorization", "Bearer "+decryptedToken)
-req.Header.Set("Content-Type", "application/json")
+	// Standard: OpenAI-kompatibel → Bearer + sk-...
+	req.Header.Set("Authorization", "Bearer "+decryptedToken)
+	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
