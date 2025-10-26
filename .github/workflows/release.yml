@@ -83,7 +83,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: darwin-intel
+          name: darwin-silicon
           path: '${{ github.workspace }}/Backlog-Manager-Silicon*.dmg'
 
   release:
