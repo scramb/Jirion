@@ -50,7 +50,7 @@ jobs:
         run: go install fyne.io/fyne/v2/cmd/fyne@latest
       - name: Build macOS app
         run: |
-          fyne package -release -os darwin -icon ./assets/app.png -name Backlog-Manager -app-id com.scramb.backlog-manager
+          fyne package -release -os darwin -icon ./assets/app.png -name Backlog-Manager -appID com.scramb.backlog-manager
       - name: Create dmg
         uses: L-Super/create-dmg-actions@v1
         with:
@@ -74,7 +74,7 @@ jobs:
         run: go install fyne.io/fyne/v2/cmd/fyne@latest
       - name: Build macOS app
         run: |
-          fyne package -release -os darwin -icon ./assets/app.png -name Backlog-Manager -app-id com.scramb.backlog-manager
+          fyne package -release -os darwin -icon ./assets/app.png -name Backlog-Manager -appID com.scramb.backlog-manager
       - name: Create dmg
         uses: L-Super/create-dmg-actions@v1
         with:
