@@ -128,7 +128,7 @@ func Decrypt(encoded string) (string, error) {
 	return string(plaintext), nil
 }
 
-func tryDecrypt(token string) string {
+func TryDecrypt(token string) string {
 	if token == "" {
 		return token
 	}
