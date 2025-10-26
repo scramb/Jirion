@@ -32,6 +32,8 @@ jobs:
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
       - name: Build binaries
         run: fyne-cross ${{ matrix.os }} -arch ${{ matrix.arch }} -app-id com.scramb.backlog-manager -icon ./assets/app.png
+        env:  
+          FYNE_CROSS_NO_FYNE: "false"
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -56,6 +58,8 @@ jobs:
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
       - name: Build binaries
         run: fyne-cross darwin -arch ${{ matrix.arch }} -app-id com.scramb.backlog-manager -icon ./assets/app.png
+        env:  
+          FYNE_CROSS_NO_FYNE: "false"
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
