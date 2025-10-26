@@ -87,7 +87,7 @@ jobs:
           path: '${{ github.workspace }}/Backlog-Manager-Silicon*.dmg'
 
   release:
-    needs: [build-linux-windows, build-macos]
+    needs: [build-linux-windows, build-macos-arm, build-macos-intel]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
