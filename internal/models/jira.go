@@ -52,7 +52,7 @@ func FetchAssignedIssues(domain, email, apiToken string) ([]JiraIssue, error) {
 	url := fmt.Sprintf("https://%s.atlassian.net/rest/api/3/search/jql?jql=assignee=currentUser()&fields=summary,issuetype,key,description", domain)
 	req, _ := http.NewRequest("GET", url, nil)
 
-	decryptedToken := tryDecrypt(apiToken)
+	decryptedToken := TryDecrypt(apiToken)
 	auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", email, decryptedToken)))
 	req.Header.Add("Authorization", "Basic "+auth)
 	req.Header.Add("Accept", "application/json")
@@ -150,7 +150,7 @@ func extractTextRecursive(nodes []ADFNode, indent int) string {
 func FetchFavouriteProjects(domain, email, token string) ([]JiraProject, error) {
 	url := fmt.Sprintf("https://%s.atlassian.net/rest/api/3/project/search?favourite=true", domain)
 	req, _ := http.NewRequest("GET", url, nil)
-	decryptedToken := tryDecrypt(token)
+	decryptedToken := TryDecrypt(token)
 	auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", email, decryptedToken)))
 	req.Header.Add("Authorization", "Basic "+auth)
 	req.Header.Add("Accept", "application/json")
@@ -213,7 +213,7 @@ func CreateJiraIssue(domain, email, token, projectKey, issueType, title, content
 	}
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	decryptedToken := tryDecrypt(token)
+	decryptedToken := TryDecrypt(token)
 	auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", email, decryptedToken)))
 	req.Header.Add("Authorization", "Basic "+auth)
 	req.Header.Add("Accept", "application/json")
@@ -236,7 +236,7 @@ func CreateJiraIssue(domain, email, token, projectKey, issueType, title, content
 func FetchProjectIssueTypes(domain, email, token, projectKey string) ([]JiraIssueType, error) {
 	url := fmt.Sprintf("https://%s.atlassian.net/rest/api/3/issue/createmeta?projectKeys=%s", domain, projectKey)
 	req, _ := http.NewRequest("GET", url, nil)
-	decryptedToken := tryDecrypt(token)
+	decryptedToken := TryDecrypt(token)
 	auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", email, decryptedToken)))
 	req.Header.Add("Authorization", "Basic "+auth)
 	req.Header.Add("Accept", "application/json")
@@ -276,7 +276,7 @@ type jiraSearchResult struct {
 func FetchAllProjects(domain, email, token string) ([]JiraProject, error) {
 	url := fmt.Sprintf("https://%s.atlassian.net/rest/api/3/project/search?favourite=true", domain)
 	req, _ := http.NewRequest("GET", url, nil)
-	decryptedToken := tryDecrypt(token)
+	decryptedToken := TryDecrypt(token)
 	auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", email, decryptedToken)))
 	req.Header.Add("Authorization", "Basic "+auth)
 	req.Header.Add("Accept", "application/json")
@@ -311,7 +311,7 @@ func FetchProjectLabels(domain, email, token, projectKey string) ([]string, erro
 	jsonBody, _ := json.Marshal(body)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	decryptedToken := tryDecrypt(token)
+	decryptedToken := TryDecrypt(token)
 	auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", email, decryptedToken)))
 	req.Header.Add("Authorization", "Basic "+auth)
 	req.Header.Add("Accept", "application/json")

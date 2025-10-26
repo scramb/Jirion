@@ -40,10 +40,10 @@ func FetchAvailableModels(endpoint, apiKey string) ([]string, error) {
 		return nil, err
 	}
 
-	decryptedToken := strings.TrimSpace(tryDecrypt(apiKey))
+	decryptedToken := strings.TrimSpace(TryDecrypt(apiKey))
 	// Falls jemand versehentlich einen bereits verschlüsselten Wert gespeichert hat:
 	if !strings.HasPrefix(decryptedToken, "sk-") {
-		second := strings.TrimSpace(tryDecrypt(decryptedToken))
+		second := strings.TrimSpace(TryDecrypt(decryptedToken))
 		if strings.HasPrefix(second, "sk-") {
 			decryptedToken = second
 		}
@@ -101,7 +101,7 @@ func GenerateBacklogContent(apiKey, endpoint, systemPrompt, userPrompt string) (
 
 	body, _ := json.Marshal(payload)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(body))
-	decryptedKey := tryDecrypt(apiKey)
+	decryptedKey := TryDecrypt(apiKey)
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", decryptedKey))
 	req.Header.Add("Content-Type", "application/json")
 

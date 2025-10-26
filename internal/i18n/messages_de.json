@@ -1,8 +1,10 @@
 {
   "app.title": "Backlog Manager",
+
   "tab.create_backlog": "📝 Backlog erstellen",
   "tab.my_tickets": "🎫 Meine Tickets",
   "tab.settings": "⚙️ Einstellungen",
+  "tab.servicedesk": "🖥️ Service Desk",
 
   "setup.title": "Willkommen! Bitte Jira-Zugangsdaten eingeben:",
   "setup.jira_domain": "Jira Domain:",
@@ -10,6 +12,9 @@
   "setup.api_token": "API Token:",
   "setup.save_start": "Speichern & Starten",
   "setup.encrypt_error": "Fehler beim Verschlüsseln des Tokens:",
+  "setup.jira_domain_placeholder": "Deine <Jira-Domain>.atlassian.net",
+  "setup.email_placeholder": "Deine E-Mail-Addresse",
+  "setup.api_token_placeholder": "Dein Jira API Token",
 
   "backlog.header": "📝 Backlog erstellen",
   "backlog.project": "Projekt",
@@ -36,6 +41,11 @@
   "tickets.all_projects": "Alle Projekte:",
   "tickets.search_placeholder": "Suche nach ID oder Titel...",
   "tickets.back": "Zurück",
+
+  "servicedesk.title": "Jira ServiceDesk",
+  "servicedesk.description": "Manage customer requests, queues, and SLAs directly from Backlog Manager.",
+  "servicedesk.refresh": "Reload",
+  "servicedesk.refresh_placeholder": "ServiceDesk data refresh will be implemented soon.",
 
   "settings.jira_config": "Jira Konfiguration",
   "settings.jira_domain": "Jira-Domain:",
