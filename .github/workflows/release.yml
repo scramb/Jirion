@@ -1,88 +1,49 @@
-name: Build & Release Backlog Manager
+name: Build and Release
 
 on:
   push:
     tags:
-      - 'v*.*.*'
-  workflow_dispatch:
-
-permissions:
-  contents: write
+      - 'v*'
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        include:
-          - os: macos-latest
-            GOOS: darwin
-            GOARCH: amd64
-            ARCHNAME: intel
-          - os: macos-latest
-            GOOS: darwin
-            GOARCH: arm64
-            ARCHNAME: arm64
-          - os: windows-latest
-            GOOS: windows
-            GOARCH: amd64
-            ARCHNAME: amd64
-
+        os: [windows, linux, darwin]
+        arch: [amd64, arm64]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Go
+      - uses: actions/checkout@v4
+      - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.23'
-
-      - name: Install Fyne CLI (for macOS)
-        if: matrix.GOOS == 'darwin'
-        run: go install fyne.io/fyne/v2/cmd/fyne@latest
-
-      - name: Build binary / package
-        shell: bash
+      - name: Install fyne-cross
+        run: go install github.com/fyne-io/fyne-cross@latest
+      - name: Build binaries
         run: |
-          mkdir -p dist
-          echo "Building for ${{ matrix.GOOS }}-${{ matrix.GOARCH }}"
-
-          if [ "${{ matrix.GOOS }}" = "darwin" ]; then
-            fyne package -os darwin -icon assets/app.png -name "Backlog Manager"
-            mv "Backlog Manager.dmg" "dist/backlog-manager-darwin-${{ matrix.ARCHNAME }}.dmg"
-          elif [ "${{ matrix.GOOS }}" = "windows" ]; then
-            GOOS=${{ matrix.GOOS }} GOARCH=${{ matrix.GOARCH }} go build -ldflags "-s -w" -o "dist/backlog-manager-windows-${{ matrix.ARCHNAME }}.exe" .
-          else
-            GOOS=${{ matrix.GOOS }} GOARCH=${{ matrix.GOARCH }} go build -ldflags "-s -w" -o "dist/backlog-manager-linux-${{ matrix.ARCHNAME }}" .
-          fi
-
-      - name: Create source archive
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          zip -r dist/backlog-manager-source.zip . -x '*.git*' 'dist/*'
-
-      - name: Upload build artifacts
+          fyne-cross ${{ matrix.os }} -arch ${{ matrix.arch }}
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: backlog-manager-${{ matrix.GOOS }}-${{ matrix.ARCHNAME }}
-          path: dist/
+          name: ${{ matrix.os }}-${{ matrix.arch }}
+          path: fyne-cross/dist/${{ matrix.os }}-${{ matrix.arch }}/*
 
   release:
-    runs-on: ubuntu-latest
     needs: build
+    runs-on: ubuntu-latest
     steps:
-      - name: Download all build artifacts
+      - uses: actions/checkout@v4
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
-        with:
-          path: dist
-
+      - name: Zip source
+        run: zip -r source.zip .
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/**/backlog-manager-darwin-intel.dmg
-            dist/**/backlog-manager-darwin-arm64.dmg
-            dist/**/backlog-manager-windows-amd64.exe
-            dist/**/backlog-manager-source.zip
+            **/*.tar.xz
+            **/*.zip
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
