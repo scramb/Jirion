@@ -53,13 +53,17 @@ jobs:
         run: go install fyne.io/fyne/v2/cmd/fyne@latest
       - name: Build macOS app
         run: |
-          mkdir -p dist/darwin-${{ matrix.arch }}
-          fyne package -os darwin -icon ./assets/app.png -name Backlog-Manager -app-id com.scramb.backlog-manager 
+          fyne package -release -os darwin -icon ./assets/app.png -name Backlog-Manager -app-id com.scramb.backlog-manager
+      - name: Create dmg
+        uses: L-Super/create-dmg-actions@v1
+        with:
+          dmg_name: 'Backlog-Manager-Intel'
+          src_dir: '${{ github.workspace }}/Backlog-Manager.app'
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: darwin-${{ matrix.arch }}
-          path: fyne-cross/dist/darwin-${{ matrix.arch }}/*
+          name: darwin-intel
+          path: '${{ github.workspace }}/Backlog-Manager-Intel*.dmg'
 
   build-macos-arm:
     runs-on: macos-15
@@ -76,13 +80,17 @@ jobs:
         run: go install fyne.io/fyne/v2/cmd/fyne@latest
       - name: Build macOS app
         run: |
-          mkdir -p dist/darwin-${{ matrix.arch }}
-          fyne package -os darwin -icon ./assets/app.png -name Backlog-Manager -app-id com.scramb.backlog-manager 
+          fyne package -release -os darwin -icon ./assets/app.png -name Backlog-Manager -app-id com.scramb.backlog-manager
+      - name: Create dmg
+        uses: L-Super/create-dmg-actions@v1
+        with:
+          dmg_name: 'Backlog-Manager-Silicon'
+          src_dir: '${{ github.workspace }}/Backlog-Manager.app'
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: darwin-${{ matrix.arch }}
-          path: fyne-cross/dist/darwin-${{ matrix.arch }}/*
+          name: darwin-intel
+          path: '${{ github.workspace }}/Backlog-Manager-Silicon*.dmg'
 
   release:
     needs: [build-linux-windows, build-macos]
@@ -99,6 +107,7 @@ jobs:
           files: |
             **/*.tar.xz
             **/*.zip
+            **/*.dmg
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
