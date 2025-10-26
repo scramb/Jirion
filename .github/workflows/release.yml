@@ -54,6 +54,8 @@ jobs:
           go install fyne.io/fyne/v2/cmd/fyne@latest
           go install github.com/fyne-io/fyne-cross@latest
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+          brew install docker
+          colima start
       - name: Build binaries
         run: fyne-cross darwin -arch ${{ matrix.arch }} -app-id com.scramb.backlog-manager -icon ./assets/app.png --no-container
       - name: Upload artifacts
