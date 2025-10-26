@@ -28,7 +28,7 @@ jobs:
       - name: Install fyne-cross
         run: go install github.com/fyne-io/fyne-cross@latest
       - name: Build binaries
-        run: fyne-cross ${{ matrix.os }} -arch ${{ matrix.arch }}
+        run: fyne-cross ${{ matrix.os }} -arch ${{ matrix.arch }} -appID backlog-manager -icon ./assets/app.png
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
