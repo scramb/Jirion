@@ -39,6 +39,7 @@ jobs:
           path: fyne-cross/dist/${{ matrix.os }}-${{ matrix.arch }}/*
 
   build-macos-intel:
+    runs-on: macos-15-intel
     steps:
       - uses: actions/checkout@v4
       - name: Set up Go
@@ -62,6 +63,7 @@ jobs:
           path: '${{ github.workspace }}/Backlog-Manager-Intel*.dmg'
 
   build-macos-arm:
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - name: Set up Go
