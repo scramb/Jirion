@@ -19,7 +19,7 @@ func BuildLabelSettings(app fyne.App, w fyne.Window) fyne.CanvasObject {
 	prefs := app.Preferences()
 
 	projectSelect := widget.NewSelect([]string{}, nil)
-	projectSelect.PlaceHolder = i18n.T("settings.select_project")
+	projectSelect.PlaceHolder = i18n.T("settings.label_project")
 
 	labelContainer := container.NewVBox()
 
@@ -99,7 +99,7 @@ func BuildLabelSettings(app fyne.App, w fyne.Window) fyne.CanvasObject {
 
 	formContent := container.NewVBox(
 		widget.NewLabelWithStyle(i18n.T("settings.label_config"), fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		i18n.BindLabel("settings.select_project"),
+		i18n.BindLabel("settings.label_project"),
 		projectSelect,
 		labelContainer,
 	)

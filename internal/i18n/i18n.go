@@ -1,24 +1,27 @@
 package i18n
 
 import (
+	_ "embed"
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 )
 
 var messages map[string]string
 var currentLang string = "en"
 
 func LoadLanguage(lang string) error {
-	configDir, _ := os.Getwd()
-	path := filepath.Join(configDir, "internal", "i18n", fmt.Sprintf("messages_%s.json", lang))
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return fmt.Errorf("could not load language file: %w", err)
+	var data []byte
+	switch lang {
+	case "de":
+		data = LocaleDE
+	case "en":
+		data = LocaleEN
+	default:
+		return fmt.Errorf("unsupported language: %s", lang)
 	}
+
 	if err := json.Unmarshal(data, &messages); err != nil {
-		return fmt.Errorf("failed to parse language file: %w", err)
+		return fmt.Errorf("failed to parse embedded language data: %w", err)
 	}
 	currentLang = lang
 	notifyLanguageChange()
@@ -47,3 +50,9 @@ func notifyLanguageChange() {
 		cb()
 	}
 }
+
+//go:embed messages_de.json
+var LocaleDE []byte
+
+//go:embed messages_en.json
+var LocaleEN []byte

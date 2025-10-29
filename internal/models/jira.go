@@ -350,3 +350,218 @@ func FetchProjectLabels(domain, email, token, projectKey string) ([]string, erro
 	sort.Strings(labels)
 	return labels, nil
 }
+
+
+// JiraServiceDesk represents a service desk within Jira Service Management
+type JiraServiceDesk struct {
+	ID   string `json:"id"`
+	Name string `json:"projectName"`
+}
+
+type JiraServiceDeskList struct {
+	Values []JiraServiceDesk `json:"values"`
+}
+
+// FetchServiceDesks returns all visible service desks for the authenticated user
+func FetchServiceDesks(domain, email, token string) ([]JiraServiceDesk, error) {
+	url := fmt.Sprintf("https://%s.atlassian.net/rest/servicedeskapi/servicedesk", domain)
+	req, _ := http.NewRequest("GET", url, nil)
+	decryptedToken := TryDecrypt(token)
+	auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", email, decryptedToken)))
+	req.Header.Add("Authorization", "Basic "+auth)
+	req.Header.Add("Accept", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(res.Body)
+		return nil, fmt.Errorf("jira service desk api error (%d): %s", res.StatusCode, string(b))
+	}
+
+	var out JiraServiceDeskList
+	if err := json.NewDecoder(res.Body).Decode(&out); err != nil {
+		return nil, err
+	}
+
+	return out.Values, nil
+}
+
+// JiraServiceRequest represents a created or retrieved service request
+type JiraServiceRequest struct {
+	IssueKey string `json:"issueKey"`
+	IssueID  string `json:"issueId"`
+	Summary  string `json:"summary"`
+	Status   string `json:"status"`
+}
+
+// CreateServiceRequest creates a new request in a service desk
+func CreateServiceRequest(domain, email, token, serviceDeskID, requestTypeID, summary, description string, fields map[string]interface{}) (*JiraServiceRequest, error) {
+	url := fmt.Sprintf("https://%s.atlassian.net/rest/servicedeskapi/request", domain)
+
+	payload := map[string]interface{}{
+		"serviceDeskId": serviceDeskID,
+		"requestTypeId": requestTypeID,
+		"requestFieldValues": map[string]interface{}{
+			"summary":     summary,
+			"description": description,
+		},
+	}
+
+	for k, v := range fields {
+		payload["requestFieldValues"].(map[string]interface{})[k] = v
+	}
+
+	jsonBody, _ := json.Marshal(payload)
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
+	decryptedToken := TryDecrypt(token)
+	auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", email, decryptedToken)))
+	req.Header.Add("Authorization", "Basic "+auth)
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusCreated {
+		b, _ := io.ReadAll(res.Body)
+		return nil, fmt.Errorf("failed to create service request: %s", string(b))
+	}
+
+	var out JiraServiceRequest
+	if err := json.NewDecoder(res.Body).Decode(&out); err != nil {
+		return nil, err
+	}
+
+	return &out, nil
+}
+
+// FetchMyServiceRequests returns all open service requests created by the current user
+func FetchMyServiceRequests(domain, email, token string) ([]JiraServiceRequest, error) {
+	url := fmt.Sprintf("https://%s.atlassian.net/rest/servicedeskapi/request?requestOwnership=OWNED_REQUESTS&requestStatus=ALL_REQUESTS", domain)
+	req, _ := http.NewRequest("GET", url, nil)
+	decryptedToken := TryDecrypt(token)
+	auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", email, decryptedToken)))
+	req.Header.Add("Authorization", "Basic "+auth)
+	req.Header.Add("Accept", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(res.Body)
+		return nil, fmt.Errorf("jira service desk api error (%d): %s", res.StatusCode, string(b))
+	}
+
+	var data struct {
+		Values []struct {
+			IssueKey string `json:"issueKey"`
+			IssueID  string `json:"issueId"`
+			Summary  string `json:"summary"`
+			CurrentStatus struct {
+				Name string `json:"name"`
+			} `json:"currentStatus"`
+		} `json:"values"`
+	}
+
+	if err := json.NewDecoder(res.Body).Decode(&data); err != nil {
+		return nil, err
+	}
+
+	var out []JiraServiceRequest
+	for _, v := range data.Values {
+		out = append(out, JiraServiceRequest{
+			IssueKey: v.IssueKey,
+			IssueID:  v.IssueID,
+			Summary:  v.Summary,
+			Status:   v.CurrentStatus.Name,
+		})
+	}
+
+	return out, nil
+}
+
+// FetchRequestComments retrieves comments for a specific service request
+func FetchRequestComments(domain, email, token, issueID string) ([]string, error) {
+	url := fmt.Sprintf("https://%s.atlassian.net/rest/servicedeskapi/request/%s/comment", domain, issueID)
+	req, _ := http.NewRequest("GET", url, nil)
+	decryptedToken := TryDecrypt(token)
+	auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", email, decryptedToken)))
+	req.Header.Add("Authorization", "Basic "+auth)
+	req.Header.Add("Accept", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(res.Body)
+		return nil, fmt.Errorf("jira service desk api error (%d): %s", res.StatusCode, string(b))
+	}
+
+	var data struct {
+		Values []struct {
+			Body struct {
+				Content []struct {
+					Content []struct {
+						Text string `json:"text"`
+					} `json:"content"`
+				} `json:"content"`
+			} `json:"body"`
+		} `json:"values"`
+	}
+
+	if err := json.NewDecoder(res.Body).Decode(&data); err != nil {
+		return nil, err
+	}
+
+	var comments []string
+	for _, c := range data.Values {
+		for _, cc := range c.Body.Content {
+			for _, text := range cc.Content {
+				comments = append(comments, text.Text)
+			}
+		}
+	}
+
+	return comments, nil
+}
+
+// AddCommentToRequest adds a new comment to a specific service request
+func AddCommentToRequest(domain, email, token, issueID, message string) error {
+	url := fmt.Sprintf("https://%s.atlassian.net/rest/servicedeskapi/request/%s/comment", domain, issueID)
+	payload := map[string]interface{}{
+		"body": message,
+	}
+	jsonBody, _ := json.Marshal(payload)
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
+	decryptedToken := TryDecrypt(token)
+	auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", email, decryptedToken)))
+	req.Header.Add("Authorization", "Basic "+auth)
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusCreated {
+		b, _ := io.ReadAll(res.Body)
+		return fmt.Errorf("failed to add comment: %s", string(b))
+	}
+
+	return nil
+}

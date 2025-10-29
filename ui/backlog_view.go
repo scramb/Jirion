@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -35,7 +34,7 @@ func BacklogView(app fyne.App, w fyne.Window, domain, user, token string) fyne.C
 			return i18n.BindLabel("backlog.no_labels")
 		}
 
-		labelsPerRow := 5
+		labelsPerRow := 3
 		labelChecks = make(map[string]*widget.Check)
 		gridObjects := []fyne.CanvasObject{}
 
@@ -149,11 +148,11 @@ func BacklogView(app fyne.App, w fyne.Window, domain, user, token string) fyne.C
 		}()
 
 		go func() {
-			key := fmt.Sprintf("label_selection_%s", projectKey)
+			key := fmt.Sprintf("labels_%s", projectKey)
 			saved := app.Preferences().String(key)
 			var savedLabels []string
 			if saved != "" {
-				_ = json.Unmarshal([]byte(saved), &savedLabels)
+				savedLabels = strings.Split(saved, ",")
 			}
 			fyne.Do(func() {
 				if len(savedLabels) > 0 {
