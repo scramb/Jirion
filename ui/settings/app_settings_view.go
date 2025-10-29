@@ -1,6 +1,8 @@
 package settings
 
 import (
+	"fmt"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
@@ -14,13 +16,20 @@ import (
 func BuildAppSettings(app fyne.App, w fyne.Window) fyne.CanvasObject {
 	prefs := app.Preferences()
 
+	enableExperimental := i18n.BindCheckbox("settings.experimental")
+	enableExperimental.SetChecked(prefs.Bool("experimental_enabled"))
+
+	enableExperimental.OnChanged = func(checked bool) {
+		prefs.SetBool("experimental_enabled", checked)
+	}
+
 	languages := map[string]string{
 		"English": "en",
 		"Deutsch": "de",
 	}
 	currentLang := prefs.String("language")
 	if currentLang == "" {
-		currentLang = "en"
+		currentLang = "de"
 	}
 
 	langSelect := widget.NewSelect([]string{"English", "Deutsch"}, nil)
@@ -36,7 +45,7 @@ func BuildAppSettings(app fyne.App, w fyne.Window) fyne.CanvasObject {
 		selectedCode := languages[selectedLabel]
 		prefs.SetString("language", selectedCode)
 		i18n.LoadLanguage(selectedCode)
-		dialog.ShowInformation(i18n.T("settings.saved_title"), i18n.T("settings.language_saved"), w)
+		dialog.ShowInformation(i18n.T("settings.saved_title"), fmt.Sprintf(i18n.T("settings.language_changed"), selectedCode), w)
 	})
 
 	resetBtn := i18n.BindButton("settings.reset_app", theme.DeleteIcon(), func() {
@@ -44,6 +53,7 @@ func BuildAppSettings(app fyne.App, w fyne.Window) fyne.CanvasObject {
 	})
 
 	formContent := container.NewVBox(
+		enableExperimental,
 		widget.NewLabelWithStyle(i18n.T("settings.app_config"), fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		i18n.BindLabel("settings.language"),
 		langSelect,

@@ -70,5 +70,8 @@
   "settings.language_changed": "Language changed to %s.",
   "settings.model": "Model",
   "settings.loading_models": "Loading models...",
-  "settings.select_model": "Select a model"
+  "settings.select_model": "Select a model",
+  "settings.experimental": "Enable experimental features (requires restart)",
+  "settings.enable_ai_features": "Enable ai features",
+  "settings.reset_app": "Reset all configurations"
 }

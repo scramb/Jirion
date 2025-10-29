@@ -3,43 +3,29 @@ package ui
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/theme"
-	"fyne.io/fyne/v2/widget"
-
 	"github.com/scramb/backlog-manager/internal/i18n"
+	servicedesk "github.com/scramb/backlog-manager/ui/service_desk"
 )
 
-// ServiceDeskView – Platzhalter für Jira ServiceDesk-Funktionen
+// ServiceDeskView – Hauptansicht für Jira ServiceDesk-Funktionen
 func ServiceDeskView(app fyne.App, w fyne.Window) fyne.CanvasObject {
-	title := widget.NewLabelWithStyle(
-		i18n.T("servicedesk.title"),
-		fyne.TextAlignLeading,
-		fyne.TextStyle{Bold: true},
-	)
+		createTab := container.NewTabItem(i18n.T("servicedesk.create_request"), servicedesk.CreateView(app, w))
+		listTab := container.NewTabItem(i18n.T("servicedesk.my_requests"), servicedesk.ListView(app, w))
 
-	info := widget.NewLabel(i18n.T("servicedesk.description"))
+    tabs := container.NewAppTabs(
+        createTab,
+        listTab,
+    )
 
-	refreshBtn := i18n.BindButton("servicedesk.refresh", theme.ViewRefreshIcon(), func() {
-		// später: ServiceDesk API-Aufrufe (Tickets, Queues, etc.)
-		dialog := widget.NewLabel(i18n.T("servicedesk.refresh_placeholder"))
-		w.SetContent(container.NewVBox(title, info, dialog))
-	})
+    tabs.SetTabLocation(container.TabLocationTop)
 
-	content := container.NewVBox(
-		title,
-		widget.NewSeparator(),
-		info,
-		refreshBtn,
-	)
+    i18n.RegisterOnLanguageChange(func() {
+        fyne.Do(func() {
+            createTab.Text = i18n.T("servicedesk.create_request")
+            listTab.Text = i18n.T("servicedesk.my_requests")
+            tabs.Refresh()
+        })
+    })
 
-	// Reaktiver Sprachwechsel
-	i18n.RegisterOnLanguageChange(func() {
-		fyne.Do(func() {
-			title.SetText(i18n.T("servicedesk.title"))
-			info.SetText(i18n.T("servicedesk.description"))
-			refreshBtn.SetText(i18n.T("servicedesk.refresh"))
-		})
-	})
-
-	return container.NewBorder(nil, nil, nil, nil, content)
+    return tabs
 }

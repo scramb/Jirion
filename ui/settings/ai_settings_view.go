@@ -17,7 +17,7 @@ import (
 func BuildAISettings(app fyne.App, w fyne.Window) fyne.CanvasObject {
 	prefs := app.Preferences()
 
-	enableAI := widget.NewCheck(i18n.T("settings.enable_ai_features"), nil)
+	enableAI := i18n.BindCheckbox("settings.enable_ai_features")
 	enableAI.SetChecked(prefs.Bool("ai_enabled"))
 
 	endpointEntry := i18n.BindEntryWithPlaceholder("settings.ai_endpoint_placeholder", false)

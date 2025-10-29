@@ -19,6 +19,18 @@ func BindLabel(key string) *widget.Label {
 }
 
 // BindButton creates a button with live-translated text that updates automatically.
+func BindCheckbox(key string) *widget.Check {
+	checkbox := widget.NewCheck(T(key), nil)
+	RegisterOnLanguageChange(func() {
+		fyne.Do(func() {
+			checkbox.SetText(T(key))
+		})
+	})
+
+	return checkbox
+}
+
+// BindButton creates a button with live-translated text that updates automatically.
 func BindButton(key string, icon fyne.Resource, tapped func()) *widget.Button {
 	btn := widget.NewButtonWithIcon(T(key), icon, tapped)
 

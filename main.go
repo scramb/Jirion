@@ -20,7 +20,7 @@ func main() {
 	domain := prefs.String("jira_domain")
 	user := prefs.String("jira_user")
 	token := prefs.String("jira_token")
-	lang := prefs.StringWithFallback("lang", "en")
+	lang := prefs.StringWithFallback("language", "de")
 	if err := i18n.LoadLanguage(lang); err != nil {
 		fmt.Println("Failed to load language:", err)
 	}
@@ -29,5 +29,6 @@ func main() {
 	} else {
 		ui.ShowMainApp(w, a, domain, user, token)
 	}
+
 	w.ShowAndRun()
 }
