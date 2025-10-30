@@ -9,9 +9,11 @@ import (
 	"os/exec"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/scramb/backlog-manager/internal/i18n"
@@ -258,6 +260,26 @@ func TicketsView(app fyne.App, w fyne.Window, domain, user, token string, reload
 	return contentContainer
 }
 
+func createChip(text string) fyne.CanvasObject {
+	txt := canvas.NewText(text, theme.ForegroundColor())
+	txt.Alignment = fyne.TextAlignCenter
+	txt.TextSize = theme.TextSize() - 4
+
+	textSize := fyne.MeasureText(text, txt.TextSize, fyne.TextStyle{})
+	paddingX := float32(16)
+	paddingY := float32(6)
+
+	bg := canvas.NewRectangle(theme.ButtonColor())
+	bg.CornerRadius = 12
+
+	chipWidth := textSize.Width + paddingX*2
+	chipHeight := textSize.Height + paddingY*2
+
+	box := container.NewStack(bg, container.NewCenter(txt))
+	box.Resize(fyne.NewSize(chipWidth, chipHeight))
+	return box
+}
+
 // openBrowser opens a URL in the system's default browser.
 func openBrowser(url string) {
 	var cmd string
@@ -277,10 +299,11 @@ func openBrowser(url string) {
 	exec.Command(cmd, args...).Start()
 }
 
+
 // TicketDetailView shows detailed information about a Jira issue with a back button.
 func TicketDetailView(app fyne.App, w fyne.Window, issue models.JiraIssue, domain, user, token string, back func()) fyne.CanvasObject {
 	keyLabel := widget.NewLabelWithStyle(issue.Key, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-
+	labels, transitions, comments := loadTicketContent(issue, domain, user, token)
 	summaryHeader := i18n.BindLabel("tickets.summary")
 	summaryLabel := widget.NewLabel(issue.Fields.Summary)
 
@@ -289,23 +312,151 @@ func TicketDetailView(app fyne.App, w fyne.Window, issue models.JiraIssue, domai
 	descriptionLabel := widget.NewLabel(description)
 	descriptionLabel.Wrapping = fyne.TextWrapWord
 
+	// Labels-Bereich vorbereiten
+	labelTitle := widget.NewLabel("Labels:")
+	labelsFlow := container.New(layout.NewGridWrapLayout(fyne.NewSize(180, 30)))
+	
+	go func() {
+		fyne.Do(func() {
+			for _, lbl := range labels.Fields.Labels {
+				labelsFlow.Add(createChip(lbl))
+			}
+			labelsFlow.Refresh()
+		})
+	}()
+
 	backBtn := i18n.BindButton("tickets.back", theme.NavigateBackIcon(), func() {
 		back()
 	})
+	transitionOptions := []string{}
+	transitionMap := map[string]string{}
+	for _, t := range transitions {
+		transitionOptions = append(transitionOptions, t.Name)
+		transitionMap[t.Name] = t.ID
+	}
+
+	var selectedTransitionID string
+
+	transitionSelect := widget.NewSelect(transitionOptions, func(selected string) {
+		selectedTransitionID = transitionMap[selected]
+		fmt.Println(selectedTransitionID)
+	})
+
+	transitionSelect.Disable()
+
+	transitionContainer := container.NewVBox(i18n.BindLabel("tickets.transition_label"), transitionSelect)
+
+	transitionSelect.OnChanged = func (selected string)  {
+		fmt.Printf("Selected: %s", transitionMap[selected])
+	}
+
+	commentsContainer := container.NewVBox()
+
+	for _, c := range comments {
+		commentsContainer.Add(CreateChatMessageCard(c, user))
+	}
+
+	detailsSection := NewCollapsibleSection("Comments", commentsContainer)
+
 
 	content := container.NewVBox(
 		backBtn,
 		keyLabel,
 		widget.NewSeparator(),
+		transitionContainer,
 		summaryHeader,
 		summaryLabel,
 		widget.NewSeparator(),
 		descriptionHeader,
 		descriptionLabel,
+		labelTitle,
+		labelsFlow, // statt labelsContainer
+		detailsSection,
 	)
 
 	scroll := container.NewVScroll(content)
 	scroll.SetMinSize(fyne.NewSize(400, 300))
 
 	return scroll
+}
+
+func loadTicketContent(issue models.JiraIssue, domain, user, token string) (models.JiraIssueLabels, []models.JiraTransition, []models.JiraComment){
+
+	labels, errLabels := models.FetchIssueLabels(domain, user, token, issue.Id)
+	comments, errComments := models.FetchIssueComments(domain, user, token, issue.Id)
+	transitions, errTransitions := models.FetchIssueTransitions(domain, user, token, issue.Id)
+	
+	if(errComments != nil || errLabels != nil || errTransitions != nil) {
+		fmt.Print(errLabels, errComments, errTransitions)
+	}
+	for _, c := range comments {
+		if(user == c.Author.Email) {
+			fmt.Println("Das ist meine Kommentar")
+		} else {
+			fmt.Println("Nicht mein Kommentar")
+		}
+	}
+
+	return labels, transitions, comments
+}
+
+func NewCollapsibleSection(title string, content fyne.CanvasObject) fyne.CanvasObject {
+	header := widget.NewButtonWithIcon(title, theme.MenuDropDownIcon(), nil)
+	body := container.NewVBox(content)
+	body.Hide()
+
+	header.OnTapped = func() {
+		if body.Visible() {
+			body.Hide()
+			header.SetIcon(theme.MenuDropDownIcon())
+		} else {
+			body.Show()
+			header.SetIcon(theme.MenuDropUpIcon())
+		}
+	}
+
+	return container.NewVBox(header, body)
+}
+
+// CreateChatMessageCard zeigt eine Chat-Nachricht als Card an, mit Avatar und Ausrichtung je nach Autor.
+func CreateChatMessageCard(comment models.JiraComment, currentUser string) fyne.CanvasObject {
+	// Avatar laden oder Platzhalter
+	var avatar fyne.CanvasObject
+	if comment.Author.AvatarUrls.Image != "" {
+		img := canvas.NewImageFromURI(storage.NewURI(comment.Author.AvatarUrls.Image))
+		img.FillMode = canvas.ImageFillContain
+		img.SetMinSize(fyne.NewSize(32, 32))
+		img.Resize(fyne.NewSize(32, 32))
+		avatar = container.NewStack(img)
+	} else {
+		placeholder := canvas.NewCircle(theme.ForegroundColor())
+		placeholder.Resize(fyne.NewSize(32, 32))
+		avatar = container.NewStack(placeholder)
+	}
+
+	// Kommentartext
+	msg := canvas.NewText(models.ExtractDescriptionText(comment.Content), theme.ForegroundColor())
+	msg.TextSize = theme.TextSize()
+	msg.Alignment = fyne.TextAlignLeading
+
+	// Nachricht in Card
+	card := widget.NewCard("", comment.Author.DisplayName, msg)
+	card.Resize(fyne.NewSize(300, card.MinSize().Height))
+
+	// Layout: links oder rechts
+	if comment.Author.Email == currentUser {
+		// Eigene Nachricht: links
+		return container.NewHBox(
+			avatar,
+			layout.NewSpacer(),
+			card,
+		)
+	} else {
+		// Fremde Nachricht: rechts
+		return container.NewHBox(
+			card,
+			layout.NewSpacer(),
+			avatar,
+		)
+	}
 }

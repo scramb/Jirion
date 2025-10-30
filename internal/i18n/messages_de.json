@@ -41,6 +41,8 @@
   "tickets.search_placeholder": "Suche nach ID oder Titel...",
   "tickets.all_projects": "Alle Projekte",
   "tickets.back": "Zurück",
+  "tickets.summary": "Titel",
+  "tickets.description": "Beschreibung",
 
   "servicedesk.title": "Jira ServiceDesk",
   "servicedesk.description": "Verwalte Kundenanfragen, Warteschlangen & SLAs direkt im Backlog Manager.",
@@ -73,5 +75,8 @@
   "settings.select_model": "Modell auswählen",
   "settings.experimental": "Experimentelle Funktionen aktivieren (erfordert Neustart)",
   "settings.enable_ai_features": "KI-Funktionen aktivieren",
-  "settings.reset_app": "Alle Einstellungen zurücksetzen"
+  "settings.reset_app": "Alle Einstellungen zurücksetzen",
+  "setttings.labels_saved": "Einstellung gespeichert",
+  "setttings.saved_title": "Einstellung gespeichert"
+
 }

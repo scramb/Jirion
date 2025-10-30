@@ -88,7 +88,7 @@ func GenerateBacklogContent(apiKey, endpoint, systemPrompt, userPrompt string) (
 	prefs := fyne.CurrentApp().Preferences()
 	selectedModel := prefs.String("openai_model")
 	if selectedModel == "" {
-		selectedModel = "azure-gpt-4.1"
+		selectedModel = "azure-gpt-4.1-nano"
 	}
 
 	payload := map[string]interface{}{
