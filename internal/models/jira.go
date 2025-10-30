@@ -7,12 +7,14 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 )
 
 type JiraIssue struct {
 	Key    string `json:"key"`
+	Id string `json:"id"`
 	Fields struct {
 		Summary     string          `json:"summary"`
 		Description json.RawMessage `json:"description"`
@@ -20,6 +22,42 @@ type JiraIssue struct {
 			Name string `json:"name"`
 		} `json:"issuetype"`
 	} `json:"fields"`
+}
+
+type JiraIssueDetails struct {
+	Labels      JiraIssueLabels   `json:"fields"`
+	Comments    []JiraComment     `json:"comments"`
+	Transitions []JiraTransition  `json:"transitions"`
+}
+
+type JiraIssueLabels struct {
+	Fields struct {
+		Labels []string `json:"labels"`
+	}
+}
+
+type JiraCommentResult struct {
+	Comments []JiraComment `json:comment`
+}
+
+type JiraComment struct {
+	Author struct {
+		Email string `json:"emailAddress"`
+		DisplayName string `json:"displayName"`
+		AvatarUrls struct {
+			Image string `json:"48x48"`
+		}
+	}
+	Content json.RawMessage `json:"body"`
+}
+
+type JiraTransitionResult struct {
+	Transitions []JiraTransition `json:"transitions"`
+}
+
+type JiraTransition struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type JiraSearchResult struct {
@@ -48,8 +86,37 @@ type JiraCreateMetaResponse struct {
 	} `json:"projects"`
 }
 
+func FetchIssueTransitions(domain, email, token string, id string) ([]JiraTransition, error) {
+	url := fmt.Sprintf("https://%s.atlassian.net/rest/api/3/issue/%s/transitions", domain, id)
+	req, _ := http.NewRequest("GET", url, nil)
+	decryptedToken := TryDecrypt(token)
+	auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", email, decryptedToken)))
+	req.Header.Add("Authorization", "Basic "+auth)
+	req.Header.Add("Accept", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		body, _ := io.ReadAll(res.Body)
+		return nil, fmt.Errorf("jira api error (%d): %s", res.StatusCode, string(body))
+	}
+
+	var result JiraTransitionResult
+	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+	return result.Transitions, nil
+}
+
 func FetchAssignedIssues(domain, email, apiToken string) ([]JiraIssue, error) {
-	url := fmt.Sprintf("https://%s.atlassian.net/rest/api/3/search/jql?jql=assignee=currentUser()&fields=summary,issuetype,key,description", domain)
+	jql := `assignee=currentUser() AND status NOT IN ("Done", "Canceled", "Cancelled", "Approved")`
+	encodedJQL := url.QueryEscape(jql)
+	params := "fields=id,summary,issuetype,key,description"
+	url := fmt.Sprintf("https://%s.atlassian.net/rest/api/3/search/jql?jql=%s&%s", domain, encodedJQL, params)
 	req, _ := http.NewRequest("GET", url, nil)
 
 	decryptedToken := TryDecrypt(apiToken)
@@ -145,6 +212,58 @@ func extractTextRecursive(nodes []ADFNode, indent int) string {
 	}
 
 	return sb.String()
+}
+
+func FetchIssueComments(domain, email, token string, id string) ([]JiraComment, error) {
+	url := fmt.Sprintf("https://%s.atlassian.net/rest/api/3/issue/%s/comment", domain, id)
+	req, _ := http.NewRequest("GET", url, nil)
+	decryptedToken := TryDecrypt(token)
+	auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", email, decryptedToken)))
+	req.Header.Add("Authorization", "Basic "+auth)
+	req.Header.Add("Accept", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		body, _ := io.ReadAll(res.Body)
+		return nil, fmt.Errorf("jira api error (%d): %s", res.StatusCode, string(body))
+	}
+
+	var result JiraCommentResult
+	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+	return result.Comments, nil
+}
+
+func FetchIssueLabels(domain, email, token string, id string) (JiraIssueLabels, error) {
+	url := fmt.Sprintf("https://%s.atlassian.net/rest/api/3/issue/%s?fields=labels", domain, id)
+	req, _ := http.NewRequest("GET", url, nil)
+	decryptedToken := TryDecrypt(token)
+	auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", email, decryptedToken)))
+	req.Header.Add("Authorization", "Basic "+auth)
+	req.Header.Add("Accept", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return JiraIssueLabels{}, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		body, _ := io.ReadAll(res.Body)
+		return JiraIssueLabels{}, fmt.Errorf("jira api error (%d): %s", res.StatusCode, string(body))
+	}
+
+	var result JiraIssueLabels
+	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
+		return JiraIssueLabels{}, err
+	}
+	return result, nil
 }
 
 func FetchFavouriteProjects(domain, email, token string) ([]JiraProject, error) {

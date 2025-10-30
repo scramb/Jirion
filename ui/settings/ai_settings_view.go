@@ -36,15 +36,57 @@ func BuildAISettings(app fyne.App, w fyne.Window) fyne.CanvasObject {
         }
     }
 
+	modelLabel := i18n.BindLabel("settings.model")
+	modelSelect := widget.NewSelect([]string{}, nil)
+	modelSelect.PlaceHolder = i18n.T("settings.loading_models")
+
+	// Prefill current model
+	savedModel := prefs.String("ai_model")
+	if savedModel != "" {
+		modelSelect.SetSelected(savedModel)
+	}
+
+	// Load models asynchronously
+	go func() {
+		endpoint := prefs.String("ai_endpoint")
+		apiKey := prefs.String("openai_api_key")
+		decryptedKey := models.TryDecrypt(apiKey)
+
+		availableModels, err := models.FetchAvailableModels(endpoint, decryptedKey)
+		if err != nil {
+			fmt.Println("Error fetching models:", err)
+			return
+		}
+
+		var modelIDs []string
+		for _, m := range availableModels {
+			modelIDs = append(modelIDs, m)
+		}
+
+		fyne.Do(func() {
+			modelSelect.Options = modelIDs
+			if savedModel != "" {
+				modelSelect.SetSelected(savedModel)
+			}
+			modelSelect.Refresh()
+		})
+	}()
+
+	modelSelect.OnChanged = func(selected string) {
+		prefs.SetString("ai_model", selected)
+	}
+
 	// Disable inputs when AI features are turned off
 	updateFields := func(enabled bool) {
 		endpointEntry.Disable()
 		systemPromptEntry.Disable()
 		apiKeyEntry.Disable()
+		modelSelect.Disable()
 		if enabled {
 			endpointEntry.Enable()
 			systemPromptEntry.Enable()
 			apiKeyEntry.Enable()
+			modelSelect.Enable()
             // Prefill on enable as a fallback (no focus callback)
             if enc := prefs.String("openai_api_key"); enc != "" {
                 if dec := models.TryDecrypt(enc); dec != "" && apiKeyEntry.Text == "" {
@@ -92,6 +134,8 @@ func BuildAISettings(app fyne.App, w fyne.Window) fyne.CanvasObject {
 		systemPromptEntry,
 		i18n.BindLabel("settings.api_key"),
 		apiKeyEntry,
+		modelLabel,
+		modelSelect,
 	)
 
 	scroll := container.NewVScroll(formContent)
