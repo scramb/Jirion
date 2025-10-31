@@ -698,7 +698,6 @@ func AddCommentToTicket(domain, email, token, issueId, message string) error {
 	return nil
 }
 
-
 // AddCommentToRequest adds a new comment to a specific service request
 func AddCommentToRequest(domain, email, token, issueID, message string) error {
 	url := fmt.Sprintf("https://%s.atlassian.net/rest/servicedeskapi/request/%s/comment", domain, issueID)

@@ -6,6 +6,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
+
 func CollapsibleSection(title string, content fyne.CanvasObject) fyne.CanvasObject {
 	header := widget.NewButtonWithIcon(title, theme.MenuDropDownIcon(), nil)
 	body := container.NewVBox(content)
