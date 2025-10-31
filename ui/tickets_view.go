@@ -45,6 +45,8 @@ func TicketsView(app fyne.App, w fyne.Window, domain, user, token string, reload
 
 			var icon fyne.Resource
 			switch issue.Fields.IssueType.Name {
+			case "Epic":
+				icon = theme.GridIcon()
 			case "Story":
 				icon = theme.FileIcon()
 			case "Bug":
@@ -312,12 +314,41 @@ func TicketDetailView(app fyne.App, w fyne.Window, issue models.JiraIssue, domai
 	}
 
 	commentsContainer := container.NewVBox()
+	addCommentSection := widget.NewMultiLineEntry()
+	addCommentBtn := i18n.BindButton("tickets.add_comment_button", nil, nil)
+
+	commentsContainer.Add(i18n.BindLabel("tickets.add_comment_header"))
+	commentsContainer.Add(addCommentSection)
+	commentsContainer.Add(addCommentBtn)
 
 	for _, c := range comments {
 		commentsContainer.Add(components.CreateChatMessageCard(c, user))
 	}
 
-	detailsSection := NewCollapsibleSection("Comments", commentsContainer)
+	addCommentBtn.OnTapped = func() {
+		addCommentBtn.Disable()
+		go func () {
+			if addCommentSection.Text == "" {
+				fyne.Do(func() {
+					addCommentBtn.Enable()
+					dialog.ShowInformation(i18n.T("tickets.error"), i18n.T("tickets.error_fields"), w)
+				})
+				return
+			}
+			err := models.AddCommentToTicket(domain, user, token, issue.Id, addCommentSection.Text)
+			fyne.Do(func() {
+				addCommentBtn.Enable()
+				if err != nil {
+					dialog.ShowError(err, w)
+					return
+				}
+				dialog.ShowInformation(i18n.T("tickets.comment_created"), i18n.T("tickets.created"), w)
+				addCommentSection.SetText("")
+			})
+		}()
+	}
+
+	detailsSection := components.CollapsibleSection(i18n.T("tickets.comment_section_header"), commentsContainer)
 
 	content := container.NewVBox(
 		backBtn,
@@ -349,33 +380,7 @@ func loadTicketContent(issue models.JiraIssue, domain, user, token string) (mode
 	if errComments != nil || errLabels != nil || errTransitions != nil {
 		fmt.Print(errLabels, errComments, errTransitions)
 	}
-	for _, c := range comments {
-		if user == c.Author.Email {
-			fmt.Println("Das ist meine Kommentar")
-		} else {
-			fmt.Println("Nicht mein Kommentar")
-		}
-	}
 
 	return labels, transitions, comments
 }
-
-func NewCollapsibleSection(title string, content fyne.CanvasObject) fyne.CanvasObject {
-	header := widget.NewButtonWithIcon(title, theme.MenuDropDownIcon(), nil)
-	body := container.NewVBox(content)
-	body.Hide()
-
-	header.OnTapped = func() {
-		if body.Visible() {
-			body.Hide()
-			header.SetIcon(theme.MenuDropDownIcon())
-		} else {
-			body.Show()
-			header.SetIcon(theme.MenuDropUpIcon())
-		}
-	}
-
-	return container.NewVBox(header, body)
-}
-
 

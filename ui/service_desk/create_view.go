@@ -62,7 +62,7 @@ func CreateView(app fyne.App, w fyne.Window) fyne.CanvasObject {
 	// Submit button
 	submitBtn := i18n.BindButton("servicedesk.submit_request", theme.ConfirmIcon(), func() {
 		if deskSelect.Selected == "" || summaryEntry.Text == "" || descriptionEntry.Text == "" {
-			err := fmt.Errorf(i18n.T("servicedesk.validation_error"))
+			err := fmt.Errorf(i18n.T("servicedesk.validation_error"), nil)
 			dialog.ShowError(err, w)
 			return
 		}

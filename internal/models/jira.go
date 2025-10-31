@@ -656,11 +656,55 @@ func FetchRequestComments(domain, email, token, issueID string) ([]string, error
 	return comments, nil
 }
 
+func AddCommentToTicket(domain, email, token, issueId, message string) error {
+	url := fmt.Sprintf("https://%s.atlassian.net/rest/api/3/issue/%s/comment", domain, issueId)
+	payload := map[string]interface{}{
+		"body": map[string]interface{}{
+			"type":    "doc",
+			"version": 1,
+			"content": []interface{}{
+				map[string]interface{}{
+					"type": "paragraph",
+					"content": []interface{}{
+						map[string]interface{}{
+							"type": "text",
+							"text": message,
+						},
+					},
+				},
+			},
+		},
+	}
+	jsonBody, _ := json.Marshal(payload)
+
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
+	decryptedToken := TryDecrypt(token)
+	auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", email, decryptedToken)))
+	req.Header.Add("Authorization", "Basic "+auth)
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusCreated {
+		b, _ := io.ReadAll(res.Body)
+		return fmt.Errorf("failed to add comment: %s", string(b))
+	}
+
+	return nil
+}
+
+
 // AddCommentToRequest adds a new comment to a specific service request
 func AddCommentToRequest(domain, email, token, issueID, message string) error {
 	url := fmt.Sprintf("https://%s.atlassian.net/rest/servicedeskapi/request/%s/comment", domain, issueID)
 	payload := map[string]interface{}{
-		"body": message,
+		"body":   message,
+		"public": true, // Kommentar ist öffentlich sichtbar
 	}
 	jsonBody, _ := json.Marshal(payload)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
