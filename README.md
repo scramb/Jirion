@@ -59,7 +59,7 @@ go mod tidy
 go run .
 
 # Produktionsbuild (macOS Beispiel)
-go build -o backlog-manager .
+fyne package -release -os darwin -icon ./assets/app.png -name Backlog-Manager -app-id com.scramb.backlog-manager
 ```
 
 ### Entwicklungsmodus (persistente Daten)
