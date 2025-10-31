@@ -259,10 +259,6 @@ func TicketsView(app fyne.App, w fyne.Window, domain, user, token string, reload
 	return contentContainer
 }
 
-
-
-
-
 // TicketDetailView shows detailed information about a Jira issue with a back button.
 func TicketDetailView(app fyne.App, w fyne.Window, issue models.JiraIssue, domain, user, token string, back func()) fyne.CanvasObject {
 	keyLabel := widget.NewLabelWithStyle(issue.Key, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
@@ -327,7 +323,7 @@ func TicketDetailView(app fyne.App, w fyne.Window, issue models.JiraIssue, domai
 
 	addCommentBtn.OnTapped = func() {
 		addCommentBtn.Disable()
-		go func () {
+		go func() {
 			if addCommentSection.Text == "" {
 				fyne.Do(func() {
 					addCommentBtn.Enable()
@@ -383,4 +379,3 @@ func loadTicketContent(issue models.JiraIssue, domain, user, token string) (mode
 
 	return labels, transitions, comments
 }
-
