@@ -43,7 +43,8 @@
   "tickets.back": "Back",
   "tickets.summary": "Title",
   "tickets.description": "Description",
-
+  "tickets.transition_label": "Move Tickets",
+  
   "servicedesk.title": "Jira ServiceDesk",
   "servicedesk.description": "Verwalte Kundenanfragen, Warteschlangen und SLAs direkt im Backlog Manager.",
   "servicedesk.refresh": "Neu laden",

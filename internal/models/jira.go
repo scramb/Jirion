@@ -14,7 +14,7 @@ import (
 
 type JiraIssue struct {
 	Key    string `json:"key"`
-	Id string `json:"id"`
+	Id     string `json:"id"`
 	Fields struct {
 		Summary     string          `json:"summary"`
 		Description json.RawMessage `json:"description"`
@@ -25,9 +25,9 @@ type JiraIssue struct {
 }
 
 type JiraIssueDetails struct {
-	Labels      JiraIssueLabels   `json:"fields"`
-	Comments    []JiraComment     `json:"comments"`
-	Transitions []JiraTransition  `json:"transitions"`
+	Labels      JiraIssueLabels  `json:"fields"`
+	Comments    []JiraComment    `json:"comments"`
+	Transitions []JiraTransition `json:"transitions"`
 }
 
 type JiraIssueLabels struct {
@@ -42,9 +42,9 @@ type JiraCommentResult struct {
 
 type JiraComment struct {
 	Author struct {
-		Email string `json:"emailAddress"`
+		Email       string `json:"emailAddress"`
 		DisplayName string `json:"displayName"`
-		AvatarUrls struct {
+		AvatarUrls  struct {
 			Image string `json:"48x48"`
 		}
 	}
@@ -470,7 +470,6 @@ func FetchProjectLabels(domain, email, token, projectKey string) ([]string, erro
 	return labels, nil
 }
 
-
 // JiraServiceDesk represents a service desk within Jira Service Management
 type JiraServiceDesk struct {
 	ID   string `json:"id"`
@@ -583,9 +582,9 @@ func FetchMyServiceRequests(domain, email, token string) ([]JiraServiceRequest, 
 
 	var data struct {
 		Values []struct {
-			IssueKey string `json:"issueKey"`
-			IssueID  string `json:"issueId"`
-			Summary  string `json:"summary"`
+			IssueKey      string `json:"issueKey"`
+			IssueID       string `json:"issueId"`
+			Summary       string `json:"summary"`
 			CurrentStatus struct {
 				Name string `json:"name"`
 			} `json:"currentStatus"`

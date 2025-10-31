@@ -29,12 +29,12 @@ func BuildAISettings(app fyne.App, w fyne.Window) fyne.CanvasObject {
 	systemPromptEntry.ExtendBaseWidget(systemPromptEntry)
 	apiKeyEntry := i18n.BindEntryWithPlaceholder("settings.api_key_placeholder", true)
 
-    // Prefill API key once, if stored and entry is empty
-    if enc := prefs.String("openai_api_key"); enc != "" {
-        if dec := models.TryDecrypt(enc); dec != "" && apiKeyEntry.Text == "" {
-            apiKeyEntry.SetText(dec)
-        }
-    }
+	// Prefill API key once, if stored and entry is empty
+	if enc := prefs.String("openai_api_key"); enc != "" {
+		if dec := models.TryDecrypt(enc); dec != "" && apiKeyEntry.Text == "" {
+			apiKeyEntry.SetText(dec)
+		}
+	}
 
 	modelLabel := i18n.BindLabel("settings.model")
 	modelSelect := widget.NewSelect([]string{}, nil)
@@ -87,12 +87,12 @@ func BuildAISettings(app fyne.App, w fyne.Window) fyne.CanvasObject {
 			systemPromptEntry.Enable()
 			apiKeyEntry.Enable()
 			modelSelect.Enable()
-            // Prefill on enable as a fallback (no focus callback)
-            if enc := prefs.String("openai_api_key"); enc != "" {
-                if dec := models.TryDecrypt(enc); dec != "" && apiKeyEntry.Text == "" {
-                    apiKeyEntry.SetText(dec)
-                }
-            }
+			// Prefill on enable as a fallback (no focus callback)
+			if enc := prefs.String("openai_api_key"); enc != "" {
+				if dec := models.TryDecrypt(enc); dec != "" && apiKeyEntry.Text == "" {
+					apiKeyEntry.SetText(dec)
+				}
+			}
 		}
 	}
 

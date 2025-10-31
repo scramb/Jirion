@@ -299,7 +299,6 @@ func openBrowser(url string) {
 	exec.Command(cmd, args...).Start()
 }
 
-
 // TicketDetailView shows detailed information about a Jira issue with a back button.
 func TicketDetailView(app fyne.App, w fyne.Window, issue models.JiraIssue, domain, user, token string, back func()) fyne.CanvasObject {
 	keyLabel := widget.NewLabelWithStyle(issue.Key, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
@@ -315,7 +314,7 @@ func TicketDetailView(app fyne.App, w fyne.Window, issue models.JiraIssue, domai
 	// Labels-Bereich vorbereiten
 	labelTitle := widget.NewLabel("Labels:")
 	labelsFlow := container.New(layout.NewGridWrapLayout(fyne.NewSize(180, 30)))
-	
+
 	go func() {
 		fyne.Do(func() {
 			for _, lbl := range labels.Fields.Labels {
@@ -346,7 +345,7 @@ func TicketDetailView(app fyne.App, w fyne.Window, issue models.JiraIssue, domai
 
 	transitionContainer := container.NewVBox(i18n.BindLabel("tickets.transition_label"), transitionSelect)
 
-	transitionSelect.OnChanged = func (selected string)  {
+	transitionSelect.OnChanged = func(selected string) {
 		fmt.Printf("Selected: %s", transitionMap[selected])
 	}
 
@@ -357,7 +356,6 @@ func TicketDetailView(app fyne.App, w fyne.Window, issue models.JiraIssue, domai
 	}
 
 	detailsSection := NewCollapsibleSection("Comments", commentsContainer)
-
 
 	content := container.NewVBox(
 		backBtn,
@@ -380,17 +378,17 @@ func TicketDetailView(app fyne.App, w fyne.Window, issue models.JiraIssue, domai
 	return scroll
 }
 
-func loadTicketContent(issue models.JiraIssue, domain, user, token string) (models.JiraIssueLabels, []models.JiraTransition, []models.JiraComment){
+func loadTicketContent(issue models.JiraIssue, domain, user, token string) (models.JiraIssueLabels, []models.JiraTransition, []models.JiraComment) {
 
 	labels, errLabels := models.FetchIssueLabels(domain, user, token, issue.Id)
 	comments, errComments := models.FetchIssueComments(domain, user, token, issue.Id)
 	transitions, errTransitions := models.FetchIssueTransitions(domain, user, token, issue.Id)
-	
-	if(errComments != nil || errLabels != nil || errTransitions != nil) {
+
+	if errComments != nil || errLabels != nil || errTransitions != nil {
 		fmt.Print(errLabels, errComments, errTransitions)
 	}
 	for _, c := range comments {
-		if(user == c.Author.Email) {
+		if user == c.Author.Email {
 			fmt.Println("Das ist meine Kommentar")
 		} else {
 			fmt.Println("Nicht mein Kommentar")

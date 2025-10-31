@@ -25,7 +25,7 @@ func ShowMainApp(w fyne.Window, app fyne.App, domain, user, token string) {
 		container.NewTabItem(i18n.T("tab.settings"), settingsView),
 	)
 
-	if(prefs.Bool("experimental_enabled")) {
+	if prefs.Bool("experimental_enabled") {
 		tabs.Append(container.NewTabItem(i18n.T("tab.servicedesk"), serviceDeskView))
 	}
 

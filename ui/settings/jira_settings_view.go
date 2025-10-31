@@ -26,11 +26,11 @@ func BuildJiraSettings(app fyne.App, w fyne.Window) fyne.CanvasObject {
 	tokenEntry := i18n.BindEntryWithPlaceholder("settings.jira_token_placeholder", true)
 
 	// Synchronize Jira token behavior with AI token logic
-    if enc := prefs.String("jira_token"); enc != "" {
-        if dec := models.TryDecrypt(enc); dec != "" && tokenEntry.Text == "" {
-            tokenEntry.SetText(dec)
-        }
-    }
+	if enc := prefs.String("jira_token"); enc != "" {
+		if dec := models.TryDecrypt(enc); dec != "" && tokenEntry.Text == "" {
+			tokenEntry.SetText(dec)
+		}
+	}
 
 	saveBtn := i18n.BindButton("settings.save", theme.ConfirmIcon(), func() {
 		prefs.SetString("jira_domain", domainEntry.Text)
