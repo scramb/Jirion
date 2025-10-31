@@ -2,22 +2,19 @@ package ui
 
 import (
 	"fmt"
-	"runtime"
 	"sort"
 	"strings"
 
-	"os/exec"
-
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
-	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"github.com/scramb/backlog-manager/internal/helper"
 	"github.com/scramb/backlog-manager/internal/i18n"
 	"github.com/scramb/backlog-manager/internal/models"
+	"github.com/scramb/backlog-manager/ui/components"
 )
 
 // NewTicketsView builds the “My Tickets” tab content.
@@ -64,7 +61,7 @@ func TicketsView(app fyne.App, w fyne.Window, domain, user, token string, reload
 
 			openBtn.OnTapped = func() {
 				url := fmt.Sprintf("https://%s.atlassian.net/browse/%s", domain, issue.Key)
-				openBrowser(url)
+				helper.OpenBrowser(url)
 			}
 		},
 	)
@@ -260,44 +257,9 @@ func TicketsView(app fyne.App, w fyne.Window, domain, user, token string, reload
 	return contentContainer
 }
 
-func createChip(text string) fyne.CanvasObject {
-	txt := canvas.NewText(text, theme.ForegroundColor())
-	txt.Alignment = fyne.TextAlignCenter
-	txt.TextSize = theme.TextSize() - 4
 
-	textSize := fyne.MeasureText(text, txt.TextSize, fyne.TextStyle{})
-	paddingX := float32(16)
-	paddingY := float32(6)
 
-	bg := canvas.NewRectangle(theme.ButtonColor())
-	bg.CornerRadius = 12
 
-	chipWidth := textSize.Width + paddingX*2
-	chipHeight := textSize.Height + paddingY*2
-
-	box := container.NewStack(bg, container.NewCenter(txt))
-	box.Resize(fyne.NewSize(chipWidth, chipHeight))
-	return box
-}
-
-// openBrowser opens a URL in the system's default browser.
-func openBrowser(url string) {
-	var cmd string
-	var args []string
-
-	switch runtime.GOOS {
-	case "darwin":
-		cmd = "open"
-	case "windows":
-		cmd = "rundll32"
-		args = []string{"url.dll,FileProtocolHandler"}
-	default:
-		cmd = "xdg-open"
-	}
-
-	args = append(args, url)
-	exec.Command(cmd, args...).Start()
-}
 
 // TicketDetailView shows detailed information about a Jira issue with a back button.
 func TicketDetailView(app fyne.App, w fyne.Window, issue models.JiraIssue, domain, user, token string, back func()) fyne.CanvasObject {
@@ -318,7 +280,7 @@ func TicketDetailView(app fyne.App, w fyne.Window, issue models.JiraIssue, domai
 	go func() {
 		fyne.Do(func() {
 			for _, lbl := range labels.Fields.Labels {
-				labelsFlow.Add(createChip(lbl))
+				labelsFlow.Add(components.CreateChip(lbl))
 			}
 			labelsFlow.Refresh()
 		})
@@ -352,7 +314,7 @@ func TicketDetailView(app fyne.App, w fyne.Window, issue models.JiraIssue, domai
 	commentsContainer := container.NewVBox()
 
 	for _, c := range comments {
-		commentsContainer.Add(CreateChatMessageCard(c, user))
+		commentsContainer.Add(components.CreateChatMessageCard(c, user))
 	}
 
 	detailsSection := NewCollapsibleSection("Comments", commentsContainer)
@@ -416,45 +378,4 @@ func NewCollapsibleSection(title string, content fyne.CanvasObject) fyne.CanvasO
 	return container.NewVBox(header, body)
 }
 
-// CreateChatMessageCard zeigt eine Chat-Nachricht als Card an, mit Avatar und Ausrichtung je nach Autor.
-func CreateChatMessageCard(comment models.JiraComment, currentUser string) fyne.CanvasObject {
-	// Avatar laden oder Platzhalter
-	var avatar fyne.CanvasObject
-	if comment.Author.AvatarUrls.Image != "" {
-		img := canvas.NewImageFromURI(storage.NewURI(comment.Author.AvatarUrls.Image))
-		img.FillMode = canvas.ImageFillContain
-		img.SetMinSize(fyne.NewSize(32, 32))
-		img.Resize(fyne.NewSize(32, 32))
-		avatar = container.NewStack(img)
-	} else {
-		placeholder := canvas.NewCircle(theme.ForegroundColor())
-		placeholder.Resize(fyne.NewSize(32, 32))
-		avatar = container.NewStack(placeholder)
-	}
 
-	// Kommentartext
-	msg := canvas.NewText(models.ExtractDescriptionText(comment.Content), theme.ForegroundColor())
-	msg.TextSize = theme.TextSize()
-	msg.Alignment = fyne.TextAlignLeading
-
-	// Nachricht in Card
-	card := widget.NewCard("", comment.Author.DisplayName, msg)
-	card.Resize(fyne.NewSize(300, card.MinSize().Height))
-
-	// Layout: links oder rechts
-	if comment.Author.Email == currentUser {
-		// Eigene Nachricht: links
-		return container.NewHBox(
-			avatar,
-			layout.NewSpacer(),
-			card,
-		)
-	} else {
-		// Fremde Nachricht: rechts
-		return container.NewHBox(
-			card,
-			layout.NewSpacer(),
-			avatar,
-		)
-	}
-}
