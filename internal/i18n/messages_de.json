@@ -44,6 +44,11 @@
   "tickets.summary": "Titel",
   "tickets.description": "Beschreibung",
   "tickets.transition_label": "Issue Status verändern",
+  "tickets.comment_section_header": "Kommentare",
+  "tickets.add_comment_header": "Kommentar",
+  "tickets.add_comment_button": "Kommentar hinzufügen",
+  "tickets.comment_created": "Kommentar erfolgreich erstellt",
+  "tickets.created": "Neuer Kommentar erstellt",
   
   "servicedesk.title": "Jira ServiceDesk",
   "servicedesk.description": "Verwalte Kundenanfragen, Warteschlangen & SLAs direkt im Backlog Manager.",

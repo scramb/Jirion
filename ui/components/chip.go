@@ -8,7 +8,7 @@ import (
 )
 
 func CreateChip(text string) fyne.CanvasObject {
-	txt := canvas.NewText(text, theme.ForegroundColor())
+	txt := canvas.NewText(text, theme.Color(theme.ColorNameForeground))
 	txt.Alignment = fyne.TextAlignCenter
 	txt.TextSize = theme.TextSize() - 4
 
@@ -16,7 +16,7 @@ func CreateChip(text string) fyne.CanvasObject {
 	paddingX := float32(16)
 	paddingY := float32(6)
 
-	bg := canvas.NewRectangle(theme.ButtonColor())
+	bg := canvas.NewRectangle(theme.Color(theme.ColorNameButton))
 	bg.CornerRadius = 12
 
 	chipWidth := textSize.Width + paddingX*2
