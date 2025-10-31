@@ -2,8 +2,6 @@ package servicedesk
 
 import (
 	"fmt"
-	"os/exec"
-	"runtime"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -11,22 +9,10 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
+	"github.com/scramb/backlog-manager/internal/helper"
 	"github.com/scramb/backlog-manager/internal/i18n"
 	"github.com/scramb/backlog-manager/internal/models"
 )
-
-func openBrowser(url string) error {
-	switch runtime.GOOS {
-	case "linux":
-		return exec.Command("xdg-open", url).Start()
-	case "windows":
-		return exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
-	case "darwin":
-		return exec.Command("open", url).Start()
-	default:
-		return fmt.Errorf("unsupported platform")
-	}
-}
 
 func ListView(app fyne.App, w fyne.Window) fyne.CanvasObject {
 	pageTitle := widget.NewLabelWithStyle(i18n.T("servicedesk.my_requests"), fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
@@ -74,9 +60,7 @@ func ListView(app fyne.App, w fyne.Window) fyne.CanvasObject {
 
 			linkBtn.OnTapped = func() {
 				url := fmt.Sprintf("https://%s.atlassian.net/browse/%s", domain, item.IssueKey)
-				if err := openBrowser(url); err != nil {
-					dialog.ShowError(err, w)
-				}
+				helper.OpenBrowser(url)
 			}
 		},
 	)
