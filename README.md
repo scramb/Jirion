@@ -123,7 +123,7 @@ Enter your Jira instance (e.g. `<jira-space>.atlassian.net`), your email, and yo
 
 ---
 
-## 🍺 License – MIT License + Restricted Commercial Use Addendum
+## License – MIT License + Restricted Commercial Use Addendum
 
 MIT License
 
@@ -151,7 +151,7 @@ SOFTWARE.
 
 ### Restricted Commercial Use Addendum
 
-Use of this software for commercial purposes by entities with more than 50 employees or annual revenues exceeding $10 million USD requires a separate commercial license from the author. For licensing inquiries, please contact Carsten Meininger at carschi92@gmail.com.
+Use of this software for commercial purposes by entities with more than 50 employees or annual revenues exceeding $1 million USD requires a separate commercial license from the author. For licensing inquiries, please contact Carsten Meininger at carschi92@gmail.com.
 
 ---
 
