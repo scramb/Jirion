@@ -16,9 +16,11 @@ jobs:
       matrix:
         include:
           - os: windows
-            arch: amd64
+            arch: amd64,386
           - os: linux
-            arch: amd64
+            arch: amd64,386,arm64
+          - os: freebsd
+            arch: amd64,arm64
     steps:
       - uses: actions/checkout@v4
       - name: Set up Go
@@ -31,7 +33,7 @@ jobs:
           go install github.com/fyne-io/fyne-cross@latest
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
       - name: Build binaries
-        run: fyne-cross ${{ matrix.os }} -arch ${{ matrix.arch }} -app-id com.scramb.jirion -icon ./assets/app.png
+        run: fyne-cross ${{ matrix.os }} -release -arch ${{ matrix.arch }} -app-id com.scramb.jirion -icon ./assets/app.png
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -50,17 +52,17 @@ jobs:
         run: go install fyne.io/fyne/v2/cmd/fyne@latest
       - name: Build macOS app
         run: |
-          fyne package -release -os darwin -icon ./assets/app.png -name jirion -appID com.scramb.jirion
+          fyne package -release -os darwin -icon ./assets/app.png -name Jirion -appID com.scramb.jirion
       - name: Create dmg
         uses: L-Super/create-dmg-actions@v1
         with:
-          dmg_name: 'jirion-Intel'
-          src_dir: '${{ github.workspace }}/jirion.app'
+          dmg_name: 'Jirion-Intel'
+          src_dir: '${{ github.workspace }}/Jirion.app'
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: darwin-intel
-          path: '${{ github.workspace }}/jirion-Intel*.dmg'
+          path: '${{ github.workspace }}/Jirion-Intel*.dmg'
 
   build-macos-arm:
     runs-on: macos-15
@@ -74,17 +76,17 @@ jobs:
         run: go install fyne.io/fyne/v2/cmd/fyne@latest
       - name: Build macOS app
         run: |
-          fyne package -release -os darwin -icon ./assets/app.png -name jirion -appID com.scramb.jirion
+          fyne package -release -os darwin -icon ./assets/app.png -name Jirion -appID com.scramb.jirion
       - name: Create dmg
         uses: L-Super/create-dmg-actions@v1
         with:
-          dmg_name: 'jirion-Silicon'
-          src_dir: '${{ github.workspace }}/jirion.app'
+          dmg_name: 'Jirion-Silicon'
+          src_dir: '${{ github.workspace }}/Jirion.app'
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: darwin-silicon
-          path: '${{ github.workspace }}/jirion-Silicon*.dmg'
+          path: '${{ github.workspace }}/Jirion-Silicon*.dmg'
 
   release:
     needs: [build-linux-windows, build-macos-arm, build-macos-intel]
