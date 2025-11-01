@@ -31,7 +31,7 @@ jobs:
           go install github.com/fyne-io/fyne-cross@latest
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
       - name: Build binaries
-        run: fyne-cross ${{ matrix.os }} -arch ${{ matrix.arch }} -app-id com.scramb.backlog-manager -icon ./assets/app.png
+        run: fyne-cross ${{ matrix.os }} -arch ${{ matrix.arch }} -app-id com.scramb.jirion -icon ./assets/app.png
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -50,17 +50,17 @@ jobs:
         run: go install fyne.io/fyne/v2/cmd/fyne@latest
       - name: Build macOS app
         run: |
-          fyne package -release -os darwin -icon ./assets/app.png -name Backlog-Manager -appID com.scramb.backlog-manager
+          fyne package -release -os darwin -icon ./assets/app.png -name jirion -appID com.scramb.jirion
       - name: Create dmg
         uses: L-Super/create-dmg-actions@v1
         with:
-          dmg_name: 'Backlog-Manager-Intel'
-          src_dir: '${{ github.workspace }}/Backlog-Manager.app'
+          dmg_name: 'jirion-Intel'
+          src_dir: '${{ github.workspace }}/jirion.app'
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: darwin-intel
-          path: '${{ github.workspace }}/Backlog-Manager-Intel*.dmg'
+          path: '${{ github.workspace }}/jirion-Intel*.dmg'
 
   build-macos-arm:
     runs-on: macos-15
@@ -74,17 +74,17 @@ jobs:
         run: go install fyne.io/fyne/v2/cmd/fyne@latest
       - name: Build macOS app
         run: |
-          fyne package -release -os darwin -icon ./assets/app.png -name Backlog-Manager -appID com.scramb.backlog-manager
+          fyne package -release -os darwin -icon ./assets/app.png -name jirion -appID com.scramb.jirion
       - name: Create dmg
         uses: L-Super/create-dmg-actions@v1
         with:
-          dmg_name: 'Backlog-Manager-Silicon'
-          src_dir: '${{ github.workspace }}/Backlog-Manager.app'
+          dmg_name: 'jirion-Manager-Silicon'
+          src_dir: '${{ github.workspace }}/jirion.app'
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: darwin-silicon
-          path: '${{ github.workspace }}/Backlog-Manager-Silicon*.dmg'
+          path: '${{ github.workspace }}/jirion-Silicon*.dmg'
 
   release:
     needs: [build-linux-windows, build-macos-arm, build-macos-intel]

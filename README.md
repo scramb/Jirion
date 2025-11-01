@@ -53,8 +53,8 @@ backlog-manager/
 ### Local Setup
 ```bash
 # Clone repository
-git clone https://github.com/scramb/backlog-manager.git
-cd backlog-manager
+git clone https://github.com/scramb/jirion.git
+cd jirion
 
 # Install dependencies
 go mod tidy
@@ -63,13 +63,13 @@ go mod tidy
 go run .
 
 # Production build (macOS example)
-fyne package -release -os darwin -icon ./assets/app.png -name Backlog-Manager -app-id com.scramb.backlog-manager
+fyne package -release -os darwin -icon ./assets/app.png -name Jirion -app-id com.scramb.jirion
 ```
 
 ### Development Mode (persistent data)
 By default, Fyne stores preferences on macOS here:
 ```
-~/Library/Preferences/fyne/backlog-manager/preferences.json
+~/Library/Preferences/fyne/jirion/preferences.json
 ```
 For a repo-local dev store, you can (optionally) set in `main.go`:
 ```go
@@ -85,10 +85,10 @@ Then data will be stored at:
 ## 📦 Release Builds (via GitHub Actions)
 
 On release, the following are automatically created:
-- `backlog-manager-darwin-amd64.dmg`
-- `backlog-manager-darwin-arm64.dmg`
-- `backlog-manager-windows-amd64.exe`
-- `backlog-manager-linux-amd64`
+- `jirion-darwin-amd64.dmg`
+- `jirion-darwin-arm64.dmg`
+- `jirion-windows-amd64.exe`
+- `jirion-linux-amd64`
 
 ---
 
