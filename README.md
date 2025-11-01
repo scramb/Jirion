@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/scramb/Jirion/blob/main/assets/logo.png?raw=true" alt="Jirion Logo"/>
+  <img src="https://github.com/scramb/Jirion/blob/main/assets/logo_cropped.png?raw=true" alt="Jirion Logo"/>
 </p>
 
 # Jirion
