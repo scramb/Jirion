@@ -127,7 +127,7 @@ Enter your Jira instance (e.g. `<jira-space>.atlassian.net`), your email, and yo
 
 MIT License
 
-Copyright (c) 2023 Carsten Meininger
+Copyright (c) 2025 Carsten Meininger
 
 Permission is hereby granted, free of charge, to any person obtaining a copy  
 of this software and associated documentation files (the "Software"), to deal  
