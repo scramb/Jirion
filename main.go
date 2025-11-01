@@ -11,9 +11,9 @@ import (
 
 func main() {
 	// Mit eindeutiger ID starten (fix für Preferences-Fehler)
-	os.Setenv("FYNE_APP_STORAGE", "/Users/carstenmeininger/go/src/backlog-manager/.fyne")
-	a := app.NewWithID("com.scramb.backlog-manager")
-	w := a.NewWindow("Backlog Manager")
+	os.Setenv("FYNE_APP_STORAGE", "/Users/carstenmeininger/go/src/jirion/.fyne")
+	a := app.NewWithID("com.scramb.jirion")
+	w := a.NewWindow("Jirion")
 
 	// Persistierte Einstellungen aus Preferences lesen
 	prefs := a.Preferences()
