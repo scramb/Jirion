@@ -19,8 +19,6 @@ jobs:
         include:
           - os: windows
             arch: amd64
-          - os: windows
-            arch: "386"
     steps:
       - uses: actions/checkout@v4
       - name: Set up Go
