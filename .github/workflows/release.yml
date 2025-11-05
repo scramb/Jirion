@@ -73,7 +73,7 @@ jobs:
         run: |
           fyne package --release -os darwin --icon ./assets/app.png --name Jirion --app-id com.scramb.jirion --app-version $VERSION
       - name: Archive app
-        run: tar -czf Jirion-arm64.tar.gz Jirion.app
+        run: tar -czf Jirion-Intel.tar.gz Jirion.app
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -101,12 +101,12 @@ jobs:
         run: |
           fyne package --release -os darwin --icon ./assets/app.png --name Jirion --app-id com.scramb.jirion --app-version $VERSION
       - name: Archive app
-        run: tar -czf Jirion-amd64.tar.gz Jirion.app
+        run: tar -czf Jirion-arm64.tar.gz Jirion.app
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: darwin-silicon
-          path: '${{ github.workspace }}/Jirion-amd64*.tar.gz'
+          path: '${{ github.workspace }}/Jirion-arm64*.tar.gz'
 
   release:
     needs: [build-windows-linux, build-macos-arm, build-macos-intel]
