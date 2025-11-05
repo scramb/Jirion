@@ -71,7 +71,7 @@ jobs:
         run: go install fyne.io/tools/cmd/fyne@latest
       - name: Build macOS app
         run: |
-          fyne package -release -os darwin -icon ./assets/app.png -name Jirion -appID com.scramb.jirion
+          fyne package --release -os darwin --icon ./assets/app.png --name Jirion --app-id com.scramb.jirion --app-version $VERSION
       - name: Archive app
         run: tar -czf Jirion-arm64.tar.gz Jirion.app
       - name: Upload artifacts
@@ -99,7 +99,7 @@ jobs:
         run: go install fyne.io/tools/cmd/fyne@latest
       - name: Build macOS app
         run: |
-          fyne package -release -os darwin -icon ./assets/app.png -name Jirion -appID com.scramb.jirion
+          fyne package --release -os darwin --icon ./assets/app.png --name Jirion --app-id com.scramb.jirion --app-version $VERSION
       - name: Archive app
         run: tar -czf Jirion-amd64.tar.gz Jirion.app
       - name: Upload artifacts
