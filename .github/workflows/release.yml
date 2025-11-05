@@ -30,6 +30,11 @@ jobs:
       - name: Set version
         run: echo "VERSION=${VERSION}" >> $GITHUB_ENV
       - uses: actions/checkout@v4
+      - name: Checkout specified tag if manual version provided
+        if: ${{ github.ref_type != 'tag' && inputs.version != '' }}
+        run: |
+          git fetch --tags
+          git checkout "refs/tags/${{ inputs.version }}"
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -53,12 +58,17 @@ jobs:
       - name: Set version
         run: echo "VERSION=${VERSION}" >> $GITHUB_ENV
       - uses: actions/checkout@v4
+      - name: Checkout specified tag if manual version provided
+        if: ${{ github.ref_type != 'tag' && inputs.version != '' }}
+        run: |
+          git fetch --tags
+          git checkout "refs/tags/${{ inputs.version }}"
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.23'
       - name: Install fyne CLI
-        run: go install fyne.io/fyne/v2/cmd/fyne@latest
+        run: go install fyne.io/tools/cmd/fyne@latest
       - name: Build macOS app
         run: |
           fyne package -release -os darwin -icon ./assets/app.png -name Jirion -appID com.scramb.jirion
@@ -76,12 +86,17 @@ jobs:
       - name: Set version
         run: echo "VERSION=${VERSION}" >> $GITHUB_ENV
       - uses: actions/checkout@v4
+      - name: Checkout specified tag if manual version provided
+        if: ${{ github.ref_type != 'tag' && inputs.version != '' }}
+        run: |
+          git fetch --tags
+          git checkout "refs/tags/${{ inputs.version }}"
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.23'
       - name: Install fyne CLI
-        run: go install fyne.io/fyne/v2/cmd/fyne@latest
+        run: go install fyne.io/tools/cmd/fyne@latest
       - name: Build macOS app
         run: |
           fyne package -release -os darwin -icon ./assets/app.png -name Jirion -appID com.scramb.jirion
